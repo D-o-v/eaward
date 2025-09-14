@@ -3,12 +3,19 @@ import axios from 'axios'
 import { autoFillConfig, generateRandomNominator } from '../config/autoFill'
 import ConfigPanel from './ConfigPanel'
 
-const NominationForm = ({ autoSubmit, toggleAutoSubmit, countdown }) => {
+const NominationForm = ({ autoSubmit, toggleAutoSubmit, countdown, currentFormData }) => {
   const [categories, setCategories] = useState([])
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState(currentFormData || {
     ...autoFillConfig,
     ...generateRandomNominator()
   })
+  
+  // Update form data when currentFormData changes (during auto-submission)
+  useEffect(() => {
+    if (currentFormData && autoSubmit) {
+      setFormData(currentFormData)
+    }
+  }, [currentFormData, autoSubmit])
 
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)

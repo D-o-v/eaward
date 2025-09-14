@@ -9,6 +9,10 @@ function App() {
   const [autoSubmit, setAutoSubmit] = useState(false)
   const [nextSubmitTime, setNextSubmitTime] = useState(0)
   const [countdown, setCountdown] = useState(0)
+  const [currentFormData, setCurrentFormData] = useState({
+    ...autoFillConfig,
+    ...generateRandomNominator()
+  })
   const submitIntervalRef = useRef(null)
   const countdownIntervalRef = useRef(null)
 
@@ -26,39 +30,62 @@ function App() {
   }
 
   const scheduleNextSubmit = () => {
+    if (!autoSubmit) return
+    
     const interval = getRandomInterval()
     setNextSubmitTime(Date.now() + interval)
     
     const timeout = setTimeout(async () => {
       if (autoSubmit) {
+        // Generate fresh random data
         const newData = {
           ...autoFillConfig,
           ...generateRandomNominator()
         }
-        await handleSubmit(newData)
+        
+        // Update displayed form data
+        setCurrentFormData(newData)
+        
+        // Submit the data
+        const result = await handleSubmit(newData)
+        console.log('Auto-submission result:', result)
+        
+        // Continue the cycle
         scheduleNextSubmit()
       }
     }, interval)
+    
     
     submitIntervalRef.current = timeout
   }
 
   const toggleAutoSubmit = () => {
     if (autoSubmit) {
+      // Stop auto-submission
       clearTimeout(submitIntervalRef.current)
       clearInterval(countdownIntervalRef.current)
       setAutoSubmit(false)
       setCountdown(0)
+      setNextSubmitTime(0)
     } else {
+      // Start auto-submission
       setAutoSubmit(true)
+      
+      // Generate and show first submission data
+      const firstData = {
+        ...autoFillConfig,
+        ...generateRandomNominator()
+      }
+      setCurrentFormData(firstData)
+      
+      // Submit first one after short delay
       setTimeout(async () => {
-        const newData = {
-          ...autoFillConfig,
-          ...generateRandomNominator()
-        }
-        await handleSubmit(newData)
+        const result = await handleSubmit(firstData)
+        console.log('First auto-submission result:', result)
+        
+        // Start the continuous cycle
         scheduleNextSubmit()
-      }, 1000)
+      }, 3000) // 3 second delay for first submission
     }
   }
 
@@ -72,6 +99,10 @@ function App() {
           clearInterval(countdownIntervalRef.current)
         }
       }, 1000)
+    } else {
+      if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current)
+      }
     }
     return () => {
       if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current)
@@ -144,6 +175,7 @@ function App() {
               autoSubmit={autoSubmit}
               toggleAutoSubmit={toggleAutoSubmit}
               countdown={countdown}
+              currentFormData={currentFormData}
             />
           ) : (
             <SubmissionsList />

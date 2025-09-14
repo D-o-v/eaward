@@ -248,6 +248,11 @@ export const generateRandomNominator = () => {
     `${firstName.toLowerCase()}_${Math.floor(Math.random() * 999)}@hotmail.com`
   ]
   
+  // Nigerian phone prefixes
+  const nigerianPrefixes = ['0803', '0806', '0813', '0816', '0810', '0814', '0903', '0906', '0915', '0905', '0802', '0808', '0812', '0701', '0708', '0802', '0809', '0817', '0818', '0909', '0908', '0901', '0904', '0907', '0902']
+  const prefix = nigerianPrefixes[Math.floor(Math.random() * nigerianPrefixes.length)]
+  const phoneNumber = `+234${prefix.substring(1)}${Math.floor(Math.random() * 9000000 + 1000000)}`
+  
   const shouldFillPhone = Math.random() > 0.2
   
   return {
@@ -255,7 +260,7 @@ export const generateRandomNominator = () => {
     nominator_first: firstName,
     nominator_last: lastName,
     nominator_email: emailPatterns[Math.floor(Math.random() * emailPatterns.length)],
-    nominator_phone: shouldFillPhone ? `+234${Math.floor(Math.random() * 900000000 + 700000000)}` : '',
+    nominator_phone: shouldFillPhone ? phoneNumber : '',
     reason: reason
   }
 }

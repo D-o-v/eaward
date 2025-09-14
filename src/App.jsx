@@ -90,37 +90,44 @@ function App() {
       
       // Set initial countdown
       const initialDelay = 3000
-      setNextSubmitTime(Date.now() + initialDelay)
-      setCountdown(3)
+      const startTime = Date.now() + initialDelay
+      setNextSubmitTime(startTime)
+      setCountdown(Math.ceil(initialDelay / 1000))
       
       // Submit first one after countdown
-      setTimeout(async () => {
-        if (autoSubmit) {
-          setIsSubmitting(true)
-          setCountdown(0)
-          
-          const result = await handleSubmit(firstData)
-          console.log('First auto-submission result:', result)
-          
-          setIsSubmitting(false)
-          
-          // Start the continuous cycle
-          scheduleNextSubmit()
-        }
+      const firstTimeout = setTimeout(async () => {
+        setIsSubmitting(true)
+        setCountdown(0)
+        
+        const result = await handleSubmit(firstData)
+        console.log('First auto-submission result:', result)
+        
+        setIsSubmitting(false)
+        
+        // Start the continuous cycle
+        scheduleNextSubmit()
       }, initialDelay)
+      
+      submitIntervalRef.current = firstTimeout
     }
   }
 
   // Countdown timer effect
   useEffect(() => {
     if (autoSubmit && nextSubmitTime > 0 && !isSubmitting) {
-      countdownIntervalRef.current = setInterval(() => {
+      const updateCountdown = () => {
         const remaining = Math.max(0, Math.ceil((nextSubmitTime - Date.now()) / 1000))
         setCountdown(remaining)
         if (remaining === 0) {
           clearInterval(countdownIntervalRef.current)
         }
-      }, 1000)
+      }
+      
+      // Update immediately
+      updateCountdown()
+      
+      // Then update every second
+      countdownIntervalRef.current = setInterval(updateCountdown, 1000)
     } else {
       if (countdownIntervalRef.current) {
         clearInterval(countdownIntervalRef.current)

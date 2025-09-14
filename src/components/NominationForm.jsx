@@ -1,23 +1,17 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
+import { autoFillConfig, generateRandomContact } from '../config/autoFill'
+import ConfigPanel from './ConfigPanel'
 
 const NominationForm = () => {
   const [categories, setCategories] = useState([])
+  const [config, setConfig] = useState(autoFillConfig)
   const [formData, setFormData] = useState({
-    nominator_first: '',
-    nominator_last: '',
-    nominator_phone: '',
-    nominator_email: '',
-    category: '',
-    nominee_first: '',
-    nominee_last: '',
-    nominee_instagram: '',
-    nominee_linkedin: '',
-    reason: '',
-    nominee_email: '',
-    nominee_phone: '',
-    nominee_website: ''
+    ...config,
+    ...generateRandomContact()
   })
+  const [autoSubmit, setAutoSubmit] = useState(false)
+  const [submitInterval, setSubmitInterval] = useState(null)
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -51,20 +45,10 @@ const NominationForm = () => {
       
       if (response.data.success) {
         setMessage({ type: 'success', text: response.data.message })
+        // Auto-fill with new random contact data
         setFormData({
-          nominator_first: '',
-          nominator_last: '',
-          nominator_phone: '',
-          nominator_email: '',
-          category: '',
-          nominee_first: '',
-          nominee_last: '',
-          nominee_instagram: '',
-          nominee_linkedin: '',
-          reason: '',
-          nominee_email: '',
-          nominee_phone: '',
-          nominee_website: ''
+          ...config,
+          ...generateRandomContact()
         })
       } else {
         setMessage({ type: 'error', text: response.data.message })
@@ -76,8 +60,49 @@ const NominationForm = () => {
     }
   }
 
+  const toggleAutoSubmit = () => {
+    if (autoSubmit) {
+      clearInterval(submitInterval)
+      setSubmitInterval(null)
+      setAutoSubmit(false)
+    } else {
+      const interval = setInterval(() => {
+        if (!loading) {
+          handleSubmit({ preventDefault: () => {} })
+        }
+      }, 5000) // Submit every 5 seconds
+      setSubmitInterval(interval)
+      setAutoSubmit(true)
+    }
+  }
+
+  const fillRandomData = () => {
+    setFormData({
+      ...config,
+      ...generateRandomContact()
+    })
+  }
+
+  const handleConfigUpdate = (newConfig) => {
+    setConfig(newConfig)
+    setFormData({
+      ...newConfig,
+      ...generateRandomContact()
+    })
+  }
+
+  useEffect(() => {
+    return () => {
+      if (submitInterval) {
+        clearInterval(submitInterval)
+      }
+    }
+  }, [submitInterval])
+
   return (
     <div className="max-w-4xl mx-auto">
+      <ConfigPanel onConfigUpdate={handleConfigUpdate} />
+      
       {message && (
         <div className={`mb-6 p-4 rounded-lg font-medium ${
           message.type === 'success' 
@@ -87,6 +112,33 @@ const NominationForm = () => {
           {message.text}
         </div>
       )}
+
+      <div className="flex gap-4 mb-6">
+        <button
+          type="button"
+          onClick={fillRandomData}
+          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors"
+        >
+          🎲 Fill Random Data
+        </button>
+        <button
+          type="button"
+          onClick={toggleAutoSubmit}
+          className={`px-4 py-2 rounded-lg transition-colors font-medium ${
+            autoSubmit 
+              ? 'bg-red-500 hover:bg-red-600 text-white' 
+              : 'bg-green-500 hover:bg-green-600 text-white'
+          }`}
+        >
+          {autoSubmit ? '⏹️ Stop Auto Submit' : '▶️ Start Auto Submit'}
+        </button>
+        {autoSubmit && (
+          <span className="flex items-center text-green-600 font-medium">
+            <span className="animate-pulse mr-2">🔄</span>
+            Auto-submitting every 5s
+          </span>
+        )}
+      </div>
 
       <form onSubmit={handleSubmit} className="space-y-8">
         <section>

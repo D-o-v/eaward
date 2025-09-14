@@ -9,6 +9,7 @@ function App() {
   const [autoSubmit, setAutoSubmit] = useState(false)
   const [nextSubmitTime, setNextSubmitTime] = useState(0)
   const [countdown, setCountdown] = useState(0)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [currentFormData, setCurrentFormData] = useState({
     ...autoFillConfig,
     ...generateRandomNominator()
@@ -34,9 +35,14 @@ function App() {
     
     const interval = getRandomInterval()
     setNextSubmitTime(Date.now() + interval)
+    setCountdown(Math.ceil(interval / 1000))
     
     const timeout = setTimeout(async () => {
       if (autoSubmit) {
+        // Show submitting status
+        setIsSubmitting(true)
+        setCountdown(0)
+        
         // Generate fresh random data
         const newData = {
           ...autoFillConfig,
@@ -50,11 +56,13 @@ function App() {
         const result = await handleSubmit(newData)
         console.log('Auto-submission result:', result)
         
+        // Hide submitting status
+        setIsSubmitting(false)
+        
         // Continue the cycle
         scheduleNextSubmit()
       }
     }, interval)
-    
     
     submitIntervalRef.current = timeout
   }
@@ -67,9 +75,11 @@ function App() {
       setAutoSubmit(false)
       setCountdown(0)
       setNextSubmitTime(0)
+      setIsSubmitting(false)
     } else {
       // Start auto-submission
       setAutoSubmit(true)
+      setIsSubmitting(false)
       
       // Generate and show first submission data
       const firstData = {
@@ -78,20 +88,32 @@ function App() {
       }
       setCurrentFormData(firstData)
       
-      // Submit first one after short delay
+      // Set initial countdown
+      const initialDelay = 3000
+      setNextSubmitTime(Date.now() + initialDelay)
+      setCountdown(3)
+      
+      // Submit first one after countdown
       setTimeout(async () => {
-        const result = await handleSubmit(firstData)
-        console.log('First auto-submission result:', result)
-        
-        // Start the continuous cycle
-        scheduleNextSubmit()
-      }, 3000) // 3 second delay for first submission
+        if (autoSubmit) {
+          setIsSubmitting(true)
+          setCountdown(0)
+          
+          const result = await handleSubmit(firstData)
+          console.log('First auto-submission result:', result)
+          
+          setIsSubmitting(false)
+          
+          // Start the continuous cycle
+          scheduleNextSubmit()
+        }
+      }, initialDelay)
     }
   }
 
   // Countdown timer effect
   useEffect(() => {
-    if (autoSubmit && nextSubmitTime > 0) {
+    if (autoSubmit && nextSubmitTime > 0 && !isSubmitting) {
       countdownIntervalRef.current = setInterval(() => {
         const remaining = Math.max(0, Math.ceil((nextSubmitTime - Date.now()) / 1000))
         setCountdown(remaining)
@@ -107,7 +129,7 @@ function App() {
     return () => {
       if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current)
     }
-  }, [autoSubmit, nextSubmitTime])
+  }, [autoSubmit, nextSubmitTime, isSubmitting])
 
   // Cleanup on unmount
   useEffect(() => {
@@ -132,7 +154,19 @@ function App() {
                 <div className="text-center">
                   <div className="font-bold text-lg">Auto-Nominations Running</div>
                   <div className="text-sm mt-1">
-                    Next submission in: <span className="font-mono text-lg text-green-600 bg-white px-2 py-1 rounded">{countdown}s</span>
+                    {isSubmitting ? (
+                      <span className="font-mono text-lg text-orange-600 bg-white px-2 py-1 rounded animate-pulse">
+                        📤 Submitting...
+                      </span>
+                    ) : countdown > 0 ? (
+                      <span>
+                        Next submission in: <span className="font-mono text-lg text-green-600 bg-white px-2 py-1 rounded">{countdown}s</span>
+                      </span>
+                    ) : (
+                      <span className="font-mono text-lg text-blue-600 bg-white px-2 py-1 rounded">
+                        ⚙️ Preparing...
+                      </span>
+                    )}
                   </div>
                 </div>
                 <button

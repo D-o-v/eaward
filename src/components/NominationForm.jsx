@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
 import { autoFillConfig, generateRandomContact } from '../config/autoFill'
-import ConfigPanel from './ConfigPanel'
 
 const NominationForm = () => {
   const [categories, setCategories] = useState([])
-  const [config, setConfig] = useState(autoFillConfig)
   const [formData, setFormData] = useState({
-    ...config,
+    ...autoFillConfig,
     ...generateRandomContact()
   })
   const [autoSubmit, setAutoSubmit] = useState(false)
   const [submitInterval, setSubmitInterval] = useState(null)
+  const [nextSubmitTime, setNextSubmitTime] = useState(0)
+  const [countdown, setCountdown] = useState(0)
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -47,7 +47,7 @@ const NominationForm = () => {
         setMessage({ type: 'success', text: response.data.message })
         // Auto-fill with new random contact data
         setFormData({
-          ...config,
+          ...autoFillConfig,
           ...generateRandomContact()
         })
       } else {
@@ -60,49 +60,75 @@ const NominationForm = () => {
     }
   }
 
+  const getRandomInterval = () => {
+    return Math.floor(Math.random() * (120000 - 30000) + 30000) // 30s to 2min
+  }
+
+  const scheduleNextSubmit = () => {
+    const interval = getRandomInterval()
+    setNextSubmitTime(Date.now() + interval)
+    
+    const timeout = setTimeout(() => {
+      if (!loading && autoSubmit) {
+        // Generate new random data and submit
+        const newData = {
+          ...autoFillConfig,
+          ...generateRandomContact()
+        }
+        setFormData(newData)
+        handleSubmit({ preventDefault: () => {} })
+        scheduleNextSubmit() // Schedule next random submission
+      }
+    }, interval)
+    
+    setSubmitInterval(timeout)
+  }
+
   const toggleAutoSubmit = () => {
     if (autoSubmit) {
-      clearInterval(submitInterval)
+      clearTimeout(submitInterval)
       setSubmitInterval(null)
       setAutoSubmit(false)
+      setCountdown(0)
     } else {
-      const interval = setInterval(() => {
-        if (!loading) {
-          handleSubmit({ preventDefault: () => {} })
-        }
-      }, 5000) // Submit every 5 seconds
-      setSubmitInterval(interval)
+      // Fill with random data and start
+      const newData = {
+        ...autoFillConfig,
+        ...generateRandomContact()
+      }
+      setFormData(newData)
       setAutoSubmit(true)
+      scheduleNextSubmit()
     }
   }
 
-  const fillRandomData = () => {
-    setFormData({
-      ...config,
-      ...generateRandomContact()
-    })
-  }
-
-  const handleConfigUpdate = (newConfig) => {
-    setConfig(newConfig)
-    setFormData({
-      ...newConfig,
-      ...generateRandomContact()
-    })
-  }
+  // Countdown timer effect
+  useEffect(() => {
+    let countdownInterval
+    if (autoSubmit && nextSubmitTime > 0) {
+      countdownInterval = setInterval(() => {
+        const remaining = Math.max(0, Math.ceil((nextSubmitTime - Date.now()) / 1000))
+        setCountdown(remaining)
+        if (remaining === 0) {
+          clearInterval(countdownInterval)
+        }
+      }, 1000)
+    }
+    return () => {
+      if (countdownInterval) clearInterval(countdownInterval)
+    }
+  }, [autoSubmit, nextSubmitTime])
 
   useEffect(() => {
     return () => {
       if (submitInterval) {
-        clearInterval(submitInterval)
+        clearTimeout(submitInterval)
       }
     }
   }, [submitInterval])
 
   return (
     <div className="max-w-4xl mx-auto">
-      <ConfigPanel onConfigUpdate={handleConfigUpdate} />
-      
       {message && (
         <div className={`mb-6 p-4 rounded-lg font-medium ${
           message.type === 'success' 
@@ -113,31 +139,45 @@ const NominationForm = () => {
         </div>
       )}
 
-      <div className="flex gap-4 mb-6">
-        <button
-          type="button"
-          onClick={fillRandomData}
-          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg transition-colors"
-        >
-          🎲 Fill Random Data
-        </button>
+      <div className="text-center mb-8">
         <button
           type="button"
           onClick={toggleAutoSubmit}
-          className={`px-4 py-2 rounded-lg transition-colors font-medium ${
+          className={`px-8 py-4 rounded-xl text-xl font-bold transition-all duration-300 shadow-lg transform hover:scale-105 ${
             autoSubmit 
               ? 'bg-red-500 hover:bg-red-600 text-white' 
               : 'bg-green-500 hover:bg-green-600 text-white'
           }`}
         >
-          {autoSubmit ? '⏹️ Stop Auto Submit' : '▶️ Start Auto Submit'}
+          {autoSubmit ? '⏹️ STOP AUTO SUBMIT' : '🚀 START AUTO SUBMIT'}
         </button>
+        
         {autoSubmit && (
-          <span className="flex items-center text-green-600 font-medium">
-            <span className="animate-pulse mr-2">🔄</span>
-            Auto-submitting every 5s
-          </span>
+          <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <div className="flex items-center justify-center gap-4 text-blue-800">
+              <span className="animate-pulse text-2xl">🔄</span>
+              <div className="text-center">
+                <div className="font-bold text-lg">Auto-Submit Active</div>
+                <div className="text-sm">
+                  Next submission in: <span className="font-mono text-lg">{countdown}s</span>
+                </div>
+                <div className="text-xs text-blue-600 mt-1">
+                  Random intervals: 30s - 2min
+                </div>
+              </div>
+            </div>
+          </div>
         )}
+      </div>
+
+      <div className="bg-gray-50 p-6 rounded-lg mb-8">
+        <h3 className="text-lg font-semibold text-gray-700 mb-4">Current Form Data (Auto-Generated)</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+          <div><strong>Nominee:</strong> {formData.nominee_first} {formData.nominee_last}</div>
+          <div><strong>Email:</strong> {formData.nominee_email || 'Not provided'}</div>
+          <div><strong>Phone:</strong> {formData.nominee_phone || 'Not provided'}</div>
+          <div><strong>Reason:</strong> {formData.reason?.substring(0, 100)}...</div>
+        </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-8">

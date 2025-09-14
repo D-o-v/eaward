@@ -18,7 +18,7 @@ function App() {
 
   const handleSubmit = async (formData) => {
     try {
-      const response = await axios.post('/api/submit', formData)
+      const response = await axios.post('https://eaward.onrender.com/api/submit', formData)
       return response.data
     } catch (error) {
       return { success: false, message: `Submission failed: ${error.message}` }

@@ -11,7 +11,7 @@ const SubmissionsList = () => {
 
   const fetchSubmissions = async () => {
     try {
-      const response = await axios.get('/api/submissions')
+      const response = await axios.get('https://eaward.onrender.com/api/submissions')
       setSubmissions(response.data.submissions)
     } catch (error) {
       console.error('Error fetching submissions:', error)

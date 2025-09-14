@@ -54,9 +54,13 @@ function App() {
     
     const interval = getRandomInterval()
     const nextTime = Date.now() + interval
+    const countdownSeconds = Math.ceil(interval / 1000)
+    
     setNextSubmitTime(nextTime)
-    setCountdown(Math.ceil(interval / 1000))
+    setCountdown(countdownSeconds)
     setIsSubmitting(false) // Ensure submitting is false
+    
+    console.log('Next submission scheduled in:', countdownSeconds, 'seconds')
     
     const timeout = setTimeout(async () => {
       if (autoSubmit) {
@@ -181,13 +185,9 @@ function App() {
                       <span className="font-mono text-lg text-orange-600 bg-white px-2 py-1 rounded animate-pulse">
                         📤 Submitting...
                       </span>
-                    ) : countdown > 0 ? (
+                    ) : (
                       <span>
                         Next submission in: <span className="font-mono text-lg text-green-600 bg-white px-2 py-1 rounded">{countdown}s</span>
-                      </span>
-                    ) : (
-                      <span className="font-mono text-lg text-blue-600 bg-white px-2 py-1 rounded">
-                        ⚙️ Preparing...
                       </span>
                     )}
                   </div>

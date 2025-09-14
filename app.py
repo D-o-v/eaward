@@ -76,7 +76,7 @@ class EloyNominator:
     def submit_nomination(self, data):
         form_data = self.get_form_data()
         if not form_data:
-            return False, "Failed to get form data"
+            return False, "Failed to get form data", {}
         
         url = self.generate_fbclid_url()
         start_timestamp = int(datetime.now().timestamp())
@@ -121,16 +121,36 @@ class EloyNominator:
             'X-Requested-With': 'XMLHttpRequest'
         }
         
+        submission_details = {
+            'url': 'https://www.eloyawards.com/wp-admin/admin-ajax.php',
+            'method': 'POST',
+            'headers': headers,
+            'payload': payload,
+            'referer_url': url,
+            'form_data': form_data,
+            'timestamps': {
+                'start': start_timestamp,
+                'end': end_timestamp,
+                'submission_time': datetime.now().isoformat()
+            }
+        }
+        
         try:
-            # Submit to actual ELOY website
             response = self.session.post('https://www.eloyawards.com/wp-admin/admin-ajax.php', data=payload, headers=headers)
             
-            # Save to database
+            submission_details['response'] = {
+                'status_code': response.status_code,
+                'headers': dict(response.headers),
+                'content': response.text[:500] if response.text else '',
+                'url': response.url
+            }
+            
             self.save_submission(data, form_data['token'])
             
-            return True, f"Nomination submitted successfully. Response: {response.status_code}"
+            return True, f"Nomination submitted successfully. Status: {response.status_code}", submission_details
         except Exception as e:
-            return False, f"Submission failed: {str(e)}"
+            submission_details['error'] = str(e)
+            return False, f"Submission failed: {str(e)}", submission_details
     
     def save_submission(self, data, token):
         conn = sqlite3.connect('nominations.db')
@@ -167,8 +187,12 @@ def get_categories():
 @app.route('/api/submit', methods=['POST'])
 def submit():
     data = request.json
-    success, message = nominator.submit_nomination(data)
-    return jsonify({'success': success, 'message': message})
+    success, message, details = nominator.submit_nomination(data)
+    return jsonify({
+        'success': success, 
+        'message': message,
+        'submission_details': details
+    })
 
 @app.route('/api/submissions', methods=['GET'])
 def get_submissions():
@@ -183,4 +207,4 @@ def get_submissions():
     } for s in submissions]})
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    app.run(debug=True, port=5001)

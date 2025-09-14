@@ -1,17 +1,16 @@
 // Auto-fill configuration
 export const autoFillConfig = {
-  // Fixed nominator details
-  nominator_first: "Adebayo",
-  nominator_last: "Johnson",
-  nominator_phone: "+2348123456789",
-  nominator_email: "adebayo.johnson@gmail.com",
-  
   // Fixed nomination details
   category: "ELOY Award for Entrepreneur",
+  
+  // Fixed nominee details (the person being nominated)
   nominee_first: "Chioma",
   nominee_last: "Okafor",
   nominee_instagram: "@chiomaokafor",
   nominee_linkedin: "https://linkedin.com/in/chiomaokafor",
+  nominee_email: "chioma.okafor@gmail.com",
+  nominee_phone: "+2348123456789",
+  nominee_website: "",
   reason: "Outstanding leadership and innovation in business development across Nigeria and West Africa.",
 }
 
@@ -231,14 +230,13 @@ export const nominationReasons = [
 "She transforms lives by teaching insurance and risk management to protect families’ financial futures.",
 ];
 
-
-// Generate random Nigerian name and email
-export const generateRandomContact = () => {
+// Generate random nominator (the person submitting) details
+export const generateRandomNominator = () => {
   const firstName = nigerianNames.firstNames[Math.floor(Math.random() * nigerianNames.firstNames.length)]
   const lastName = nigerianNames.lastNames[Math.floor(Math.random() * nigerianNames.lastNames.length)]
   const reason = nominationReasons[Math.floor(Math.random() * nominationReasons.length)]
   
-  // Generate varied email patterns
+  // Generate varied email patterns for nominator
   const emailPatterns = [
     `${firstName.toLowerCase()}.${lastName.toLowerCase()}@gmail.com`,
     `${firstName.toLowerCase()}${lastName.toLowerCase()}@yahoo.com`,
@@ -250,15 +248,17 @@ export const generateRandomContact = () => {
     `${firstName.toLowerCase()}_${Math.floor(Math.random() * 999)}@hotmail.com`
   ]
   
-  const shouldFillEmail = Math.random() > 0.2
-  const shouldFillPhone = Math.random() > 0.3
+  const shouldFillPhone = Math.random() > 0.2
   
   return {
-    nominee_first: firstName,
-    nominee_last: lastName,
-    reason: reason,
-    nominee_email: shouldFillEmail ? emailPatterns[Math.floor(Math.random() * emailPatterns.length)] : '',
-    nominee_phone: shouldFillPhone ? `+234${Math.floor(Math.random() * 900000000 + 700000000)}` : '',
-    nominee_website: '' // Always blank
+    // Random nominator details (the person submitting)
+    nominator_first: firstName,
+    nominator_last: lastName,
+    nominator_email: emailPatterns[Math.floor(Math.random() * emailPatterns.length)],
+    nominator_phone: shouldFillPhone ? `+234${Math.floor(Math.random() * 900000000 + 700000000)}` : '',
+    reason: reason
   }
 }
+
+// For backward compatibility
+export const generateRandomContact = generateRandomNominator;

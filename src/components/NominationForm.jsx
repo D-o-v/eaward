@@ -1,19 +1,18 @@
 import React, { useState, useEffect } from 'react'
 import axios from 'axios'
-import { autoFillConfig, generateRandomContact } from '../config/autoFill'
+import { autoFillConfig, generateRandomNominator } from '../config/autoFill'
+import ConfigPanel from './ConfigPanel'
 
-const NominationForm = () => {
+const NominationForm = ({ autoSubmit, toggleAutoSubmit, countdown }) => {
   const [categories, setCategories] = useState([])
   const [formData, setFormData] = useState({
     ...autoFillConfig,
-    ...generateRandomContact()
+    ...generateRandomNominator()
   })
-  const [autoSubmit, setAutoSubmit] = useState(false)
-  const [submitInterval, setSubmitInterval] = useState(null)
-  const [nextSubmitTime, setNextSubmitTime] = useState(0)
-  const [countdown, setCountdown] = useState(0)
+
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
+  const [showConfig, setShowConfig] = useState(false)
 
   useEffect(() => {
     fetchCategories()
@@ -44,189 +43,162 @@ const NominationForm = () => {
       const response = await axios.post('/api/submit', formData)
       
       if (response.data.success) {
-        setMessage({ type: 'success', text: response.data.message })
-        // Auto-fill with new random contact data
-        setFormData({
+        const details = response.data.submission_details
+        const detailsText = `
+✅ SUCCESS: ${response.data.message}
+
+📡 SUBMISSION DETAILS:
+• URL: ${details.url}
+• Method: ${details.method}
+• Referer: ${details.referer_url}
+• Token: ${details.form_data?.token}
+• Form ID: ${details.form_data?.form_id}
+
+📤 HEADERS SENT:
+${Object.entries(details.headers || {}).map(([k,v]) => `• ${k}: ${v}`).join('\n')}
+
+📋 PAYLOAD SENT:
+${Object.entries(details.payload || {}).map(([k,v]) => `• ${k}: ${v}`).join('\n')}
+
+📥 ELOY RESPONSE:
+• Status: ${details.response?.status_code}
+• Content: ${details.response?.content}
+        `
+        
+        setMessage({ type: 'success', text: detailsText })
+        
+        // Auto-fill with new random nominator data
+        const newData = {
           ...autoFillConfig,
-          ...generateRandomContact()
-        })
+          ...generateRandomNominator()
+        }
+        setFormData(newData)
+        
+
       } else {
-        setMessage({ type: 'error', text: response.data.message })
+        const details = response.data.submission_details
+        const errorText = `❌ ERROR: ${response.data.message}\n\nDetails: ${JSON.stringify(details, null, 2)}`
+        setMessage({ type: 'error', text: errorText })
       }
     } catch (error) {
-      setMessage({ type: 'error', text: 'Submission failed. Please try again.' })
+      setMessage({ type: 'error', text: `Submission failed: ${error.message}` })
     } finally {
       setLoading(false)
     }
   }
 
-  const getRandomInterval = () => {
-    return Math.floor(Math.random() * (120000 - 30000) + 30000) // 30s to 2min
-  }
 
-  const scheduleNextSubmit = () => {
-    const interval = getRandomInterval()
-    setNextSubmitTime(Date.now() + interval)
-    
-    const timeout = setTimeout(() => {
-      if (!loading && autoSubmit) {
-        // Generate new random data and submit
-        const newData = {
-          ...autoFillConfig,
-          ...generateRandomContact()
-        }
-        setFormData(newData)
-        handleSubmit({ preventDefault: () => {} })
-        scheduleNextSubmit() // Schedule next random submission
-      }
-    }, interval)
-    
-    setSubmitInterval(timeout)
-  }
-
-  const toggleAutoSubmit = () => {
-    if (autoSubmit) {
-      clearTimeout(submitInterval)
-      setSubmitInterval(null)
-      setAutoSubmit(false)
-      setCountdown(0)
-    } else {
-      // Fill with random data and start
-      const newData = {
-        ...autoFillConfig,
-        ...generateRandomContact()
-      }
-      setFormData(newData)
-      setAutoSubmit(true)
-      scheduleNextSubmit()
-    }
-  }
-
-  // Countdown timer effect
-  useEffect(() => {
-    let countdownInterval
-    if (autoSubmit && nextSubmitTime > 0) {
-      countdownInterval = setInterval(() => {
-        const remaining = Math.max(0, Math.ceil((nextSubmitTime - Date.now()) / 1000))
-        setCountdown(remaining)
-        if (remaining === 0) {
-          clearInterval(countdownInterval)
-        }
-      }, 1000)
-    }
-    return () => {
-      if (countdownInterval) clearInterval(countdownInterval)
-    }
-  }, [autoSubmit, nextSubmitTime])
-
-  useEffect(() => {
-    return () => {
-      if (submitInterval) {
-        clearTimeout(submitInterval)
-      }
-    }
-  }, [submitInterval])
 
   return (
     <div className="max-w-4xl mx-auto">
       {message && (
-        <div className={`mb-6 p-4 rounded-lg font-medium ${
+        <div className={`mb-6 p-4 rounded-lg font-mono text-xs max-h-96 overflow-y-auto ${
           message.type === 'success' 
             ? 'bg-green-100 text-green-800 border border-green-200' 
             : 'bg-red-100 text-red-800 border border-red-200'
         }`}>
-          {message.text}
+          <pre className="whitespace-pre-wrap">{message.text}</pre>
         </div>
       )}
 
       <div className="text-center mb-8">
-        <button
-          type="button"
-          onClick={toggleAutoSubmit}
-          className={`px-8 py-4 rounded-xl text-xl font-bold transition-all duration-300 shadow-lg transform hover:scale-105 ${
-            autoSubmit 
-              ? 'bg-red-500 hover:bg-red-600 text-white' 
-              : 'bg-green-500 hover:bg-green-600 text-white'
-          }`}
-        >
-          {autoSubmit ? '⏹️ STOP AUTO SUBMIT' : '🚀 START AUTO SUBMIT'}
-        </button>
-        
-        {autoSubmit && (
-          <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
-            <div className="flex items-center justify-center gap-4 text-blue-800">
-              <span className="animate-pulse text-2xl">🔄</span>
-              <div className="text-center">
-                <div className="font-bold text-lg">Auto-Submit Active</div>
-                <div className="text-sm">
-                  Next submission in: <span className="font-mono text-lg">{countdown}s</span>
-                </div>
-                <div className="text-xs text-blue-600 mt-1">
-                  Random intervals: 30s - 2min
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        <div className="flex justify-center gap-4 mb-6">
+          <button
+            type="button"
+            onClick={() => setShowConfig(!showConfig)}
+            className="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg transition-all duration-300 shadow-lg"
+          >
+            ⚙️ Configuration
+          </button>
+          <button
+            type="button"
+            onClick={toggleAutoSubmit}
+            className={`px-12 py-6 rounded-2xl text-2xl font-bold transition-all duration-300 shadow-2xl transform hover:scale-105 ${
+              autoSubmit 
+                ? 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white' 
+                : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white'
+            }`}
+          >
+            {autoSubmit ? '⏹️ STOP AUTO NOMINATIONS' : '🚀 START AUTO NOMINATIONS'}
+          </button>
+        </div>
+
       </div>
 
-      <div className="bg-gray-50 p-6 rounded-lg mb-8">
-        <h3 className="text-lg font-semibold text-gray-700 mb-4">Current Form Data (Auto-Generated)</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-          <div><strong>Nominee:</strong> {formData.nominee_first} {formData.nominee_last}</div>
-          <div><strong>Email:</strong> {formData.nominee_email || 'Not provided'}</div>
-          <div><strong>Phone:</strong> {formData.nominee_phone || 'Not provided'}</div>
-          <div><strong>Reason:</strong> {formData.reason?.substring(0, 100)}...</div>
+      <div className="bg-gradient-to-r from-eloy-primary to-eloy-secondary p-6 rounded-xl mb-8 text-white shadow-lg">
+        <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+          📝 Current Submission Data
+        </h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="bg-white bg-opacity-20 p-3 rounded-lg">
+            <strong>👤 Nominator:</strong> {formData.nominator_first} {formData.nominator_last}
+          </div>
+          <div className="bg-white bg-opacity-20 p-3 rounded-lg">
+            <strong>📧 Nominator Email:</strong> {formData.nominator_email}
+          </div>
+          <div className="bg-white bg-opacity-20 p-3 rounded-lg">
+            <strong>📱 Nominator Phone:</strong> {formData.nominator_phone || 'Not provided'}
+          </div>
+          <div className="bg-white bg-opacity-20 p-3 rounded-lg">
+            <strong>👩 Nominee:</strong> {formData.nominee_first} {formData.nominee_last}
+          </div>
+        </div>
+        <div className="mt-4 bg-white bg-opacity-20 p-4 rounded-lg">
+          <strong>💬 Reason:</strong> {formData.reason?.substring(0, 150)}...
         </div>
       </div>
 
+      {showConfig && <ConfigPanel />}
+
       <form onSubmit={handleSubmit} className="space-y-8">
         <section>
-          <h3 className="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b-2 border-eloy-primary">
-            Your Information
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                First Name *
+                Your Name *
               </label>
-              <input
-                type="text"
-                name="nominator_first"
-                value={formData.nominator_first}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-eloy-primary focus:border-transparent transition-all"
-              />
+              <div className="grid grid-cols-2 gap-4">
+                <input
+                  type="text"
+                  name="nominator_first"
+                  value={formData.nominator_first}
+                  onChange={handleChange}
+                  placeholder="First"
+                  required
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-eloy-primary focus:border-transparent transition-all"
+                />
+                <input
+                  type="text"
+                  name="nominator_last"
+                  value={formData.nominator_last}
+                  onChange={handleChange}
+                  placeholder="Last"
+                  required
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-eloy-primary focus:border-transparent transition-all"
+                />
+              </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Last Name *
+                Your phone number
               </label>
-              <input
-                type="text"
-                name="nominator_last"
-                value={formData.nominator_last}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-eloy-primary focus:border-transparent transition-all"
-              />
+              <div className="flex">
+                <span className="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-r-0 border-gray-300 rounded-l-md">
+                  Nigeria +234
+                </span>
+                <input
+                  type="tel"
+                  name="nominator_phone"
+                  value={formData.nominator_phone?.replace('+234', '') || ''}
+                  onChange={(e) => handleChange({target: {name: 'nominator_phone', value: '+234' + e.target.value}})}
+                  placeholder="0802 123 4567"
+                  className="flex-1 px-4 py-3 border border-gray-300 rounded-r-lg focus:ring-2 focus:ring-eloy-primary focus:border-transparent transition-all"
+                />
+              </div>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Phone Number
-              </label>
-              <input
-                type="tel"
-                name="nominator_phone"
-                value={formData.nominator_phone}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-eloy-primary focus:border-transparent transition-all"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email Address *
+                Your email address *
               </label>
               <input
                 type="email"
@@ -241,13 +213,10 @@ const NominationForm = () => {
         </section>
 
         <section>
-          <h3 className="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b-2 border-eloy-primary">
-            Nomination Details
-          </h3>
           <div className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Category *
+                Nomination Category *
               </label>
               <select
                 name="category"
@@ -256,7 +225,7 @@ const NominationForm = () => {
                 required
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-eloy-primary focus:border-transparent transition-all"
               >
-                <option value="">Select Category</option>
+                <option value="">ELOY Award for Entrepreneur</option>
                 {categories.map((category, index) => (
                   <option key={index} value={category}>
                     {category}
@@ -264,57 +233,26 @@ const NominationForm = () => {
                 ))}
               </select>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Nominee First Name *
-                </label>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Nominee name *
+              </label>
+              <div className="grid grid-cols-2 gap-4">
                 <input
                   type="text"
                   name="nominee_first"
                   value={formData.nominee_first}
                   onChange={handleChange}
+                  placeholder="First"
                   required
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-eloy-primary focus:border-transparent transition-all"
                 />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Nominee Last Name *
-                </label>
                 <input
                   type="text"
                   name="nominee_last"
                   value={formData.nominee_last}
                   onChange={handleChange}
-                  required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-eloy-primary focus:border-transparent transition-all"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Instagram Handle *
-                </label>
-                <input
-                  type="text"
-                  name="nominee_instagram"
-                  value={formData.nominee_instagram}
-                  onChange={handleChange}
-                  placeholder="@username"
-                  required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-eloy-primary focus:border-transparent transition-all"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  LinkedIn Profile *
-                </label>
-                <input
-                  type="text"
-                  name="nominee_linkedin"
-                  value={formData.nominee_linkedin}
-                  onChange={handleChange}
-                  placeholder="LinkedIn URL"
+                  placeholder="Last"
                   required
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-eloy-primary focus:border-transparent transition-all"
                 />
@@ -322,13 +260,38 @@ const NominationForm = () => {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Reason for Nomination
+                Nominee Instagram Handle *
+              </label>
+              <input
+                type="text"
+                name="nominee_instagram"
+                value={formData.nominee_instagram}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-eloy-primary focus:border-transparent transition-all"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Nominee Linkedin page *
+              </label>
+              <input
+                type="text"
+                name="nominee_linkedin"
+                value={formData.nominee_linkedin}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-eloy-primary focus:border-transparent transition-all"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Reason for nomination
               </label>
               <textarea
                 name="reason"
                 value={formData.reason}
                 onChange={handleChange}
-                placeholder="Why do you nominate this person?"
                 rows={4}
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-eloy-primary focus:border-transparent transition-all resize-y"
               />
@@ -337,13 +300,10 @@ const NominationForm = () => {
         </section>
 
         <section>
-          <h3 className="text-xl font-semibold text-gray-800 mb-4 pb-2 border-b-2 border-eloy-primary">
-            Optional Nominee Contact
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Nominee Email
+                Nominee email address (if known)
               </label>
               <input
                 type="email"
@@ -355,7 +315,7 @@ const NominationForm = () => {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Nominee Phone
+                Nominee Phone number (if known)
               </label>
               <input
                 type="tel"
@@ -365,29 +325,36 @@ const NominationForm = () => {
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-eloy-primary focus:border-transparent transition-all"
               />
             </div>
-          </div>
-          <div className="mt-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Nominee Website
-            </label>
-            <input
-              type="url"
-              name="nominee_website"
-              value={formData.nominee_website}
-              onChange={handleChange}
-              placeholder="https://"
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-eloy-primary focus:border-transparent transition-all"
-            />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Nominee website
+              </label>
+              <input
+                type="url"
+                name="nominee_website"
+                value={formData.nominee_website}
+                onChange={handleChange}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-eloy-primary focus:border-transparent transition-all"
+              />
+            </div>
           </div>
         </section>
 
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full bg-gradient-to-r from-eloy-primary to-eloy-secondary text-white font-semibold py-4 px-6 rounded-lg hover:from-eloy-secondary hover:to-eloy-primary transform hover:-translate-y-1 transition-all duration-300 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
-        >
-          {loading ? 'Submitting...' : 'Submit Nomination'}
-        </button>
+        <section>
+          <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg">
+            <input
+              type="checkbox"
+              id="consent"
+              checked={true}
+              readOnly
+              className="mt-1 h-4 w-4 text-eloy-primary focus:ring-eloy-primary border-gray-300 rounded"
+            />
+            <label htmlFor="consent" className="text-sm text-gray-700">
+              By submitting your data, you consent that your data can be processed by ELOY Awards Foundation for registration & marketing purposes in accordance with our privacy policy * *
+              <span className="block mt-1 font-semibold text-green-600">YES</span>
+            </label>
+          </div>
+        </section>
       </form>
     </div>
   )

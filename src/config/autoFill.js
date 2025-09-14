@@ -231,7 +231,7 @@ export const nominationReasons = [
 ];
 
 // Generate random nominator (the person submitting) details
-export const generateRandomNominator = () => {
+export const generateRandomNominator = (configData = autoFillConfig) => {
   const firstName = nigerianNames.firstNames[Math.floor(Math.random() * nigerianNames.firstNames.length)]
   const lastName = nigerianNames.lastNames[Math.floor(Math.random() * nigerianNames.lastNames.length)]
   const reason = nominationReasons[Math.floor(Math.random() * nominationReasons.length)]
@@ -255,13 +255,46 @@ export const generateRandomNominator = () => {
   
   const shouldFillPhone = Math.random() > 0.2
   
+  // Generate optional nominee fields with alternating patterns
+  const optionalFieldsPattern = Math.random()
+  let nomineeEmail = ''
+  let nomineePhone = ''
+  let nomineeWebsite = ''
+  
+  if (optionalFieldsPattern < 0.3) {
+    // 30% chance: All empty
+    nomineeEmail = ''
+    nomineePhone = ''
+    nomineeWebsite = ''
+  } else if (optionalFieldsPattern < 0.6) {
+    // 30% chance: Partial fill (1-2 fields) - use configured data
+    if (Math.random() > 0.5) {
+      nomineeEmail = configData.nominee_email
+    }
+    if (Math.random() > 0.5) {
+      nomineePhone = configData.nominee_phone
+    }
+    if (Math.random() > 0.7) {
+      nomineeWebsite = configData.nominee_website
+    }
+  } else {
+    // 40% chance: All filled - use configured data
+    nomineeEmail = configData.nominee_email
+    nomineePhone = configData.nominee_phone
+    nomineeWebsite = configData.nominee_website
+  }
+  
   return {
     // Random nominator details (the person submitting)
     nominator_first: firstName,
     nominator_last: lastName,
     nominator_email: emailPatterns[Math.floor(Math.random() * emailPatterns.length)],
     nominator_phone: shouldFillPhone ? phoneNumber : '',
-    reason: reason
+    reason: reason,
+    // Optional nominee fields (alternating)
+    nominee_email: nomineeEmail,
+    nominee_phone: nomineePhone,
+    nominee_website: nomineeWebsite
   }
 }
 

@@ -3,7 +3,7 @@ import axios from 'axios'
 import { autoFillConfig, generateRandomNominator } from '../config/autoFill'
 import ConfigPanel from './ConfigPanel'
 
-const NominationForm = ({ autoSubmit, toggleAutoSubmit, countdown, currentFormData }) => {
+const NominationForm = ({ autoSubmit, toggleAutoSubmit, countdown, currentFormData, config, onConfigUpdate }) => {
   const [categories, setCategories] = useState([])
   const [formData, setFormData] = useState(currentFormData || {
     ...autoFillConfig,
@@ -155,7 +155,7 @@ ${Object.entries(details.payload || {}).map(([k,v]) => `• ${k}: ${v}`).join('\
         </div>
       </div>
 
-      {showConfig && <ConfigPanel />}
+      {showConfig && <ConfigPanel config={config} onConfigUpdate={onConfigUpdate} />}
 
       <form onSubmit={handleSubmit} className="space-y-8">
         <section>

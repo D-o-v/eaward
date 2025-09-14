@@ -1,8 +1,8 @@
 import React, { useState } from 'react'
 import { autoFillConfig } from '../config/autoFill'
 
-const ConfigPanel = ({ onConfigUpdate }) => {
-  const [config, setConfig] = useState(autoFillConfig)
+const ConfigPanel = ({ config: initialConfig, onConfigUpdate }) => {
+  const [config, setConfig] = useState(initialConfig)
   const [isOpen, setIsOpen] = useState(false)
 
   const handleChange = (field, value) => {
@@ -96,12 +96,64 @@ const ConfigPanel = ({ onConfigUpdate }) => {
             </div>
           </div>
           
-          <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-            <h4 className="font-semibold text-blue-800 mb-2">📝 Note:</h4>
-            <p className="text-blue-700 text-sm">
-              These are the <strong>fixed nominee details</strong> that will stay the same for all submissions. 
-              The nominator details (Your Name, Email, Phone) and reasons will be randomly generated for each submission.
+          <div className="mt-8">
+            <h3 className="font-bold text-eloy-primary mb-6 text-lg">Optional Nominee Contact (Alternating)</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              These fields will be used when the system randomly decides to fill optional nominee information:
             </p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Nominee Email Address
+                </label>
+                <input
+                  type="email"
+                  value={config.nominee_email}
+                  onChange={(e) => handleChange('nominee_email', e.target.value)}
+                  placeholder="nominee@example.com"
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg text-sm focus:border-eloy-primary focus:outline-none"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Nominee Phone Number
+                </label>
+                <input
+                  type="tel"
+                  value={config.nominee_phone}
+                  onChange={(e) => handleChange('nominee_phone', e.target.value)}
+                  placeholder="+2348123456789"
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg text-sm focus:border-eloy-primary focus:outline-none"
+                />
+              </div>
+              
+              <div className="md:col-span-2">
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Nominee Website
+                </label>
+                <input
+                  type="url"
+                  value={config.nominee_website}
+                  onChange={(e) => handleChange('nominee_website', e.target.value)}
+                  placeholder="https://www.nominee-website.com"
+                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg text-sm focus:border-eloy-primary focus:outline-none"
+                />
+              </div>
+            </div>
+          </div>
+          
+          <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <h4 className="font-semibold text-blue-800 mb-2">📝 How it works:</h4>
+            <ul className="text-blue-700 text-sm space-y-1">
+              <li>• <strong>Fixed fields:</strong> Nominee name, Instagram, LinkedIn, and category stay the same</li>
+              <li>• <strong>Random fields:</strong> Nominator details (Your Name, Email, Phone) and reasons change each time</li>
+              <li>• <strong>Optional fields:</strong> Nominee email/phone/website alternate randomly:</li>
+              <li className="ml-4">- 30% chance: All empty</li>
+              <li className="ml-4">- 30% chance: 1-2 fields filled with configured data</li>
+              <li className="ml-4">- 40% chance: All fields filled with configured data</li>
+            </ul>
           </div>
         </div>
       )}

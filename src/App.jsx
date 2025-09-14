@@ -10,10 +10,20 @@ function App() {
   const [nextSubmitTime, setNextSubmitTime] = useState(0)
   const [countdown, setCountdown] = useState(0)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [config, setConfig] = useState(autoFillConfig)
   const [currentFormData, setCurrentFormData] = useState({
-    ...autoFillConfig,
-    ...generateRandomNominator()
+    ...config,
+    ...generateRandomNominator(config)
   })
+  
+  const handleConfigUpdate = (newConfig) => {
+    setConfig(newConfig)
+    // Update current form data with new config
+    setCurrentFormData({
+      ...newConfig,
+      ...generateRandomNominator(newConfig)
+    })
+  }
   const submitIntervalRef = useRef(null)
   const countdownIntervalRef = useRef(null)
 
@@ -33,8 +43,18 @@ function App() {
   const scheduleNextSubmit = () => {
     if (!autoSubmit) return
     
+    // Generate fresh random data immediately
+    const newData = {
+      ...config,
+      ...generateRandomNominator(config)
+    }
+    
+    // Update displayed form data immediately
+    setCurrentFormData(newData)
+    
     const interval = getRandomInterval()
-    setNextSubmitTime(Date.now() + interval)
+    const nextTime = Date.now() + interval
+    setNextSubmitTime(nextTime)
     setCountdown(Math.ceil(interval / 1000))
     
     const timeout = setTimeout(async () => {
@@ -42,15 +62,6 @@ function App() {
         // Show submitting status
         setIsSubmitting(true)
         setCountdown(0)
-        
-        // Generate fresh random data
-        const newData = {
-          ...autoFillConfig,
-          ...generateRandomNominator()
-        }
-        
-        // Update displayed form data
-        setCurrentFormData(newData)
         
         // Submit the data
         const result = await handleSubmit(newData)
@@ -83,8 +94,8 @@ function App() {
       
       // Generate and show first submission data
       const firstData = {
-        ...autoFillConfig,
-        ...generateRandomNominator()
+        ...config,
+        ...generateRandomNominator(config)
       }
       setCurrentFormData(firstData)
       
@@ -217,6 +228,8 @@ function App() {
               toggleAutoSubmit={toggleAutoSubmit}
               countdown={countdown}
               currentFormData={currentFormData}
+              config={config}
+              onConfigUpdate={handleConfigUpdate}
             />
           ) : (
             <SubmissionsList />

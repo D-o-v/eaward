@@ -179,6 +179,10 @@ class EloyNominator:
 
 nominator = EloyNominator()
 
+@app.route('/', methods=['GET'])
+def home():
+    return jsonify({'message': 'ELOY Awards Nominator API is running!', 'status': 'success'})
+
 @app.route('/api/categories', methods=['GET'])
 def get_categories():
     form_data = nominator.get_form_data()
@@ -207,4 +211,6 @@ def get_submissions():
     } for s in submissions]})
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5001)
+    import os
+    port = int(os.environ.get('PORT', 5001))
+    app.run(host='0.0.0.0', port=port, debug=False)

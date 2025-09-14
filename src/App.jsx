@@ -56,6 +56,7 @@ function App() {
     const nextTime = Date.now() + interval
     setNextSubmitTime(nextTime)
     setCountdown(Math.ceil(interval / 1000))
+    setIsSubmitting(false) // Ensure submitting is false
     
     const timeout = setTimeout(async () => {
       if (autoSubmit) {
@@ -67,10 +68,7 @@ function App() {
         const result = await handleSubmit(newData)
         console.log('Auto-submission result:', result)
         
-        // Hide submitting status
-        setIsSubmitting(false)
-        
-        // Continue the cycle
+        // Immediately continue the cycle without delay
         scheduleNextSubmit()
       }
     }, interval)
@@ -125,13 +123,20 @@ function App() {
 
   // Countdown timer effect
   useEffect(() => {
-    if (autoSubmit && nextSubmitTime > 0 && !isSubmitting) {
+    if (autoSubmit && nextSubmitTime > 0) {
       const updateCountdown = () => {
-        const remaining = Math.max(0, Math.ceil((nextSubmitTime - Date.now()) / 1000))
-        setCountdown(remaining)
-        if (remaining === 0) {
-          clearInterval(countdownIntervalRef.current)
+        if (!isSubmitting) {
+          const remaining = Math.max(0, Math.ceil((nextSubmitTime - Date.now()) / 1000))
+          setCountdown(remaining)
+          if (remaining === 0) {
+            clearInterval(countdownIntervalRef.current)
+          }
         }
+      }
+      
+      // Clear any existing interval
+      if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current)
       }
       
       // Update immediately

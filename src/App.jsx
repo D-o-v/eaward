@@ -43,38 +43,32 @@ function App() {
   const scheduleNextSubmit = () => {
     if (!autoSubmit) return
     
-    // Generate fresh random data immediately
+    // Generate fresh random data
     const newData = {
       ...config,
       ...generateRandomNominator(config)
     }
-    
-    // Update displayed form data immediately
     setCurrentFormData(newData)
     
     const interval = getRandomInterval()
     const nextTime = Date.now() + interval
-    const countdownSeconds = Math.ceil(interval / 1000)
-    
     setNextSubmitTime(nextTime)
-    setCountdown(countdownSeconds)
-    setIsSubmitting(false) // Ensure submitting is false
+    setCountdown(Math.ceil(interval / 1000))
+    setIsSubmitting(false)
     
-    console.log('Next submission scheduled in:', countdownSeconds, 'seconds')
+    console.log('Next submission in:', Math.ceil(interval / 1000), 'seconds')
     
     const timeout = setTimeout(async () => {
-      if (autoSubmit) {
-        // Show submitting status
-        setIsSubmitting(true)
-        setCountdown(0)
-        
-        // Submit the data
-        const result = await handleSubmit(newData)
-        console.log('Auto-submission result:', result)
-        
-        // Immediately continue the cycle without delay
-        scheduleNextSubmit()
-      }
+      if (!autoSubmit) return
+      
+      setIsSubmitting(true)
+      setCountdown(0)
+      
+      const result = await handleSubmit(newData)
+      console.log('Auto-submission result:', result)
+      
+      // Schedule next submission
+      scheduleNextSubmit()
     }, interval)
     
     submitIntervalRef.current = timeout
@@ -92,49 +86,49 @@ function App() {
     } else {
       // Start auto-submission
       setAutoSubmit(true)
-      setIsSubmitting(false)
       
-      // Generate and show first submission data
+      // Generate first submission data
       const firstData = {
         ...config,
         ...generateRandomNominator(config)
       }
       setCurrentFormData(firstData)
       
-      // Set initial countdown
-      const initialDelay = 3000
-      const startTime = Date.now() + initialDelay
-      setNextSubmitTime(startTime)
-      setCountdown(Math.ceil(initialDelay / 1000))
+      // Start with random interval (not fixed 3s)
+      const interval = getRandomInterval()
+      const nextTime = Date.now() + interval
+      setNextSubmitTime(nextTime)
+      setCountdown(Math.ceil(interval / 1000))
+      setIsSubmitting(false)
       
-      // Submit first one after countdown
-      const firstTimeout = setTimeout(async () => {
+      console.log('First submission in:', Math.ceil(interval / 1000), 'seconds')
+      
+      const timeout = setTimeout(async () => {
+        if (!autoSubmit) return
+        
         setIsSubmitting(true)
         setCountdown(0)
         
         const result = await handleSubmit(firstData)
         console.log('First auto-submission result:', result)
         
-        setIsSubmitting(false)
-        
-        // Start the continuous cycle
+        // Continue the cycle
         scheduleNextSubmit()
-      }, initialDelay)
+      }, interval)
       
-      submitIntervalRef.current = firstTimeout
+      submitIntervalRef.current = timeout
     }
   }
 
   // Countdown timer effect
   useEffect(() => {
-    if (autoSubmit && nextSubmitTime > 0) {
+    if (autoSubmit && nextSubmitTime > 0 && !isSubmitting) {
       const updateCountdown = () => {
-        if (!isSubmitting) {
-          const remaining = Math.max(0, Math.ceil((nextSubmitTime - Date.now()) / 1000))
-          setCountdown(remaining)
-          if (remaining === 0) {
-            clearInterval(countdownIntervalRef.current)
-          }
+        const remaining = Math.max(0, Math.ceil((nextSubmitTime - Date.now()) / 1000))
+        setCountdown(remaining)
+        
+        if (remaining === 0) {
+          clearInterval(countdownIntervalRef.current)
         }
       }
       

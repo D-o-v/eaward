@@ -1,18 +1,53 @@
-// Auto-fill configuration
-export const autoFillConfig = {
-  // Fixed nomination details
-  category: "ELOY Award for Entrepreneur",
-  
-  // Fixed nominee details (the person being nominated)
-  nominee_first: "Chioma",
-  nominee_last: "Okafor",
-  nominee_instagram: "@chiomaokafor",
-  nominee_linkedin: "https://linkedin.com/in/chiomaokafor",
-  nominee_email: "chioma.okafor@gmail.com",
-  nominee_phone: "+2348123456789",
-  nominee_website: "",
-  reason: "Outstanding leadership and innovation in business development across Nigeria and West Africa.",
+// Auto-fill configurations for different nominees
+export const nomineeConfigs = {
+  ngozi: {
+    category: "ELOY Award for Fashion",
+    nominee_first: "Ngozi",
+    nominee_last: "Chiadika",
+    nominee_instagram: "@ngozichiadika",
+    nominee_linkedin: "https://linkedin.com/in/ngozichiadika",
+    nominee_email: "ngozi.chiadika@gmail.com",
+    nominee_phone: "+2348123456789",
+    nominee_website: "",
+    reason: "Outstanding leadership and innovation in fashion design across Nigeria and West Africa.",
+  },
+  oluchukwu_finance: {
+    category: "ELOY Award for Finance",
+    nominee_first: "Oluchukwu",
+    nominee_last: "Chiadika",
+    nominee_instagram: "@oluchukwuchiadika",
+    nominee_linkedin: "https://linkedin.com/in/oluchukwuchiadika",
+    nominee_email: "oluchukwu.chiadika@gmail.com",
+    nominee_phone: "+2348123456790",
+    nominee_website: "",
+    reason: "Exceptional contribution to financial literacy and empowerment across Nigerian communities.",
+  },
+  oluchukwu_education: {
+    category: "ELOY Award in Education",
+    nominee_first: "Oluchukwu",
+    nominee_last: "Chiadika",
+    nominee_instagram: "@oluchukwuchiadika",
+    nominee_linkedin: "https://linkedin.com/in/oluchukwuchiadika",
+    nominee_email: "oluchukwu.chiadika@gmail.com",
+    nominee_phone: "+2348123456790",
+    nominee_website: "",
+    reason: "Revolutionary approach to educational development and youth empowerment in Nigeria.",
+  },
+  oluchukwu_technology: {
+    category: "ELOY Award for Tech",
+    nominee_first: "Oluchukwu",
+    nominee_last: "Chiadika",
+    nominee_instagram: "@oluchukwuchiadika",
+    nominee_linkedin: "https://linkedin.com/in/oluchukwuchiadika",
+    nominee_email: "oluchukwu.chiadika@gmail.com",
+    nominee_phone: "+2348123456790",
+    nominee_website: "",
+    reason: "Pioneering technological solutions and digital innovation for African businesses.",
+  }
 }
+
+// Default configuration (backward compatibility)
+export const autoFillConfig = nomineeConfigs.ngozi
 
 // Nigerian names for random generation
 export const nigerianNames = {
@@ -296,6 +331,11 @@ export const generateRandomNominator = (configData = autoFillConfig) => {
     nominee_phone: nomineePhone,
     nominee_website: nomineeWebsite
   }
+}
+
+// Get config by nominee type
+export const getNomineeConfig = (type = 'ngozi') => {
+  return nomineeConfigs[type] || nomineeConfigs.ngozi
 }
 
 // For backward compatibility

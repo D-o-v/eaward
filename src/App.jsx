@@ -258,7 +258,7 @@ function App() {
     }
   }
 
-  const generateThreeSubmissions = () => {
+  const generateFourSubmissions = () => {
     const submissions = []
     
     // 1. Fashion submission - Ngozi Chiadika
@@ -270,14 +270,17 @@ function App() {
     // 3. Education submission - Oluchukwu Chiadika
     submissions.push(generateNomineeData(nominees.finance, 'ELOY Award in Education'))
     
+    // 4. Technology submission - Oluchukwu Chiadika
+    submissions.push(generateNomineeData(nominees.finance, 'ELOY Award for Tech'))
+    
     return submissions
   }
 
   const scheduleNextSubmit = () => {
     if (!autoSubmit) return
     
-    // Generate 3 submissions (1 fashion + 2 finance)
-    const submissions = generateThreeSubmissions()
+    // Generate 4 submissions (1 fashion + 3 for Oluchukwu)
+    const submissions = generateFourSubmissions()
     setCurrentSubmissions(submissions)
     
     const interval = getRandomInterval()
@@ -286,7 +289,7 @@ function App() {
     setCountdown(Math.ceil(interval / 1000))
     setIsSubmitting(false)
     
-    console.log('Next 3 submissions in:', Math.ceil(interval / 1000), 'seconds')
+    console.log('Next 4 submissions in:', Math.ceil(interval / 1000), 'seconds')
   }
 
   const toggleAutoSubmit = () => {
@@ -301,8 +304,8 @@ function App() {
       // Start auto-submission
       setAutoSubmit(true)
       
-      // Generate first 3 submissions
-      const firstSubmissions = generateThreeSubmissions()
+      // Generate first 4 submissions
+      const firstSubmissions = generateFourSubmissions()
       setCurrentSubmissions(firstSubmissions)
       
       // Start with random interval
@@ -357,9 +360,9 @@ function App() {
     setIsSubmitting(true)
     setCountdown(0)
     
-    console.log('Submitting 3 nominations...')
+    console.log('Submitting 4 nominations...')
     
-    // Submit all 3 nominations
+    // Submit all 4 nominations
     for (let i = 0; i < currentSubmissions.length; i++) {
       const submission = currentSubmissions[i]
       const result = await handleSubmit(submission)
@@ -371,7 +374,7 @@ function App() {
       }
     }
     
-    console.log('All 3 submissions completed')
+    console.log('All 4 submissions completed')
     
     // Schedule next submission automatically
     scheduleNextSubmit()

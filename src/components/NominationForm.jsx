@@ -12,6 +12,7 @@ const SubmissionTabs = ({ currentSubmissions }) => {
       case 0: return { icon: '👗', title: 'Fashion', color: 'from-pink-500 to-purple-600' }
       case 1: return { icon: '💰', title: 'Finance', color: 'from-green-500 to-blue-600' }
       case 2: return { icon: '🎓', title: 'Education', color: 'from-blue-500 to-indigo-600' }
+      case 3: return { icon: '💻', title: 'Technology', color: 'from-purple-500 to-pink-600' }
       default: return { icon: '📝', title: 'Submission', color: 'from-gray-500 to-gray-600' }
     }
   }
@@ -237,7 +238,7 @@ ${Object.entries(details.payload || {}).map(([k,v]) => `• ${k}: ${v}`).join('\
         </div>
       )}
 
-      {autoSubmit && currentSubmissions && currentSubmissions.length === 3 ? (
+      {autoSubmit && currentSubmissions && currentSubmissions.length === 4 ? (
         <SubmissionTabs currentSubmissions={currentSubmissions} />
       ) : (
         <div>

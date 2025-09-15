@@ -1,12 +1,20 @@
 import React, { useState } from 'react'
-import { autoFillConfig } from '../config/autoFill'
+import { autoFillConfig, nomineeConfigs, getNomineeConfig } from '../config/autoFill'
 
 const ConfigPanel = ({ config: initialConfig, onConfigUpdate }) => {
   const [config, setConfig] = useState(initialConfig)
   const [isOpen, setIsOpen] = useState(false)
+  const [selectedNominee, setSelectedNominee] = useState('ngozi')
 
   const handleChange = (field, value) => {
     const newConfig = { ...config, [field]: value }
+    setConfig(newConfig)
+    onConfigUpdate(newConfig)
+  }
+  
+  const handleNomineeChange = (nomineeType) => {
+    setSelectedNominee(nomineeType)
+    const newConfig = getNomineeConfig(nomineeType)
     setConfig(newConfig)
     onConfigUpdate(newConfig)
   }
@@ -25,6 +33,64 @@ const ConfigPanel = ({ config: initialConfig, onConfigUpdate }) => {
       
       {isOpen && (
         <div className="mt-4 p-6 bg-white rounded-lg border-2 border-eloy-primary shadow-lg">
+          <h3 className="font-bold text-eloy-primary mb-6 text-lg">Select Nominee</h3>
+          
+          <div className="mb-6">
+            <label className="block text-sm font-semibold text-gray-700 mb-3">
+              Choose Nominee Configuration
+            </label>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+              <button
+                onClick={() => handleNomineeChange('ngozi')}
+                className={`p-4 rounded-lg border-2 transition-all ${
+                  selectedNominee === 'ngozi'
+                    ? 'border-eloy-primary bg-eloy-primary text-white'
+                    : 'border-gray-300 hover:border-eloy-primary'
+                }`}
+              >
+                <div className="text-2xl mb-2">👗</div>
+                <div className="font-semibold text-sm">Ngozi Chiadika</div>
+                <div className="text-xs opacity-75">Fashion</div>
+              </button>
+              <button
+                onClick={() => handleNomineeChange('oluchukwu_finance')}
+                className={`p-4 rounded-lg border-2 transition-all ${
+                  selectedNominee === 'oluchukwu_finance'
+                    ? 'border-eloy-primary bg-eloy-primary text-white'
+                    : 'border-gray-300 hover:border-eloy-primary'
+                }`}
+              >
+                <div className="text-2xl mb-2">💰</div>
+                <div className="font-semibold text-sm">Oluchukwu Chiadika</div>
+                <div className="text-xs opacity-75">Finance</div>
+              </button>
+              <button
+                onClick={() => handleNomineeChange('oluchukwu_education')}
+                className={`p-4 rounded-lg border-2 transition-all ${
+                  selectedNominee === 'oluchukwu_education'
+                    ? 'border-eloy-primary bg-eloy-primary text-white'
+                    : 'border-gray-300 hover:border-eloy-primary'
+                }`}
+              >
+                <div className="text-2xl mb-2">🎓</div>
+                <div className="font-semibold text-sm">Oluchukwu Chiadika</div>
+                <div className="text-xs opacity-75">Education</div>
+              </button>
+              <button
+                onClick={() => handleNomineeChange('oluchukwu_technology')}
+                className={`p-4 rounded-lg border-2 transition-all ${
+                  selectedNominee === 'oluchukwu_technology'
+                    ? 'border-eloy-primary bg-eloy-primary text-white'
+                    : 'border-gray-300 hover:border-eloy-primary'
+                }`}
+              >
+                <div className="text-2xl mb-2">💻</div>
+                <div className="font-semibold text-sm">Oluchukwu Chiadika</div>
+                <div className="text-xs opacity-75">Technology</div>
+              </button>
+            </div>
+          </div>
+          
           <h3 className="font-bold text-eloy-primary mb-6 text-lg">Fixed Nominee Details</h3>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -80,19 +146,13 @@ const ConfigPanel = ({ config: initialConfig, onConfigUpdate }) => {
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Nomination Category
               </label>
-              <select
+              <input
+                type="text"
                 value={config.category}
                 onChange={(e) => handleChange('category', e.target.value)}
-                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg text-sm focus:border-eloy-primary focus:outline-none"
-              >
-                <option value="ELOY Award for Entrepreneur">ELOY Award for Entrepreneur</option>
-                <option value="ELOY Award for Finance">ELOY Award for Finance</option>
-                <option value="ELOY Award for Tech">ELOY Award for Tech</option>
-                <option value="ELOY Award for Media">ELOY Award for Media</option>
-                <option value="ELOY Award for Fashion">ELOY Award for Fashion</option>
-                <option value="ELOY for Health & Wellness">ELOY for Health & Wellness</option>
-                <option value="ELOY Award in Education">ELOY Award in Education</option>
-              </select>
+                className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg text-sm focus:border-eloy-primary focus:outline-none bg-gray-50"
+                readOnly
+              />
             </div>
           </div>
           
@@ -147,6 +207,7 @@ const ConfigPanel = ({ config: initialConfig, onConfigUpdate }) => {
           <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
             <h4 className="font-semibold text-blue-800 mb-2">📝 How it works:</h4>
             <ul className="text-blue-700 text-sm space-y-1">
+              <li>• <strong>Nominee Selection:</strong> Choose from Ngozi (Fashion) or Oluchukwu (Finance/Education/Technology)</li>
               <li>• <strong>Fixed fields:</strong> Nominee name, Instagram, LinkedIn, and category stay the same</li>
               <li>• <strong>Random fields:</strong> Nominator details (Your Name, Email, Phone) and reasons change each time</li>
               <li>• <strong>Optional fields:</strong> Nominee email/phone/website alternate randomly:</li>

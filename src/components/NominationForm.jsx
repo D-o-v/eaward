@@ -3,6 +3,118 @@ import axios from 'axios'
 import { autoFillConfig, generateRandomNominator } from '../config/autoFill'
 import ConfigPanel from './ConfigPanel'
 
+// Submission Preview Component with Tabs
+const SubmissionPreview = ({ currentSubmissions }) => {
+  const [activeTab, setActiveTab] = useState(0)
+
+  if (!currentSubmissions || currentSubmissions.length === 0) return null
+
+  const getTabInfo = (index) => {
+    switch(index) {
+      case 0: return { icon: '👗', title: 'Fashion', color: 'from-pink-500 to-purple-600' }
+      case 1: return { icon: '💰', title: 'Finance', color: 'from-green-500 to-blue-600' }
+      case 2: return { icon: '🎓', title: 'Education/Tech', color: 'from-blue-500 to-indigo-600' }
+      default: return { icon: '📝', title: 'Submission', color: 'from-gray-500 to-gray-600' }
+    }
+  }
+
+  return (
+    <div className="bg-white rounded-xl shadow-xl mb-8 overflow-hidden border-2 border-eloy-primary border-opacity-20">
+      <div className="bg-gradient-to-r from-eloy-primary to-eloy-secondary p-4">
+        <h3 className="text-xl font-bold text-white text-center flex items-center justify-center gap-2">
+          🎯 Next 3 Auto-Submissions
+        </h3>
+      </div>
+      
+      {/* Tabs */}
+      <div className="flex border-b border-gray-200">
+        {currentSubmissions.map((_, index) => {
+          const tabInfo = getTabInfo(index)
+          return (
+            <button
+              key={index}
+              onClick={() => setActiveTab(index)}
+              className={`flex-1 py-4 px-6 text-center font-medium transition-all duration-300 ${
+                activeTab === index
+                  ? 'bg-gradient-to-r ' + tabInfo.color + ' text-white border-b-4 border-white'
+                  : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              <div className="text-2xl mb-1">{tabInfo.icon}</div>
+              <div className="text-sm font-bold">{tabInfo.title}</div>
+            </button>
+          )
+        })}
+      </div>
+
+      {/* Tab Content */}
+      <div className="p-6">
+        {currentSubmissions.map((submission, index) => {
+          if (activeTab !== index) return null
+          
+          const tabInfo = getTabInfo(index)
+          
+          return (
+            <div key={index} className="space-y-4">
+              <div className={`bg-gradient-to-r ${tabInfo.color} text-white p-4 rounded-lg text-center`}>
+                <div className="text-3xl mb-2">{tabInfo.icon}</div>
+                <h4 className="text-xl font-bold">{submission.category}</h4>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Nominee Info */}
+                <div className="bg-gradient-to-br from-blue-50 to-indigo-100 p-4 rounded-lg border border-blue-200">
+                  <h5 className="font-bold text-blue-800 mb-3 flex items-center gap-2">
+                    👤 Nominee Information
+                  </h5>
+                  <div className="space-y-2 text-sm">
+                    <div><strong>Name:</strong> <span className="text-blue-700">{submission.nominee_first} {submission.nominee_last}</span></div>
+                    <div><strong>Instagram:</strong> <span className="text-blue-700 break-all">{submission.nominee_instagram}</span></div>
+                    <div><strong>LinkedIn:</strong> <span className="text-blue-700 text-xs break-all">{submission.nominee_linkedin}</span></div>
+                    <div><strong>Email:</strong> <span className="text-blue-700">{submission.nominee_email}</span></div>
+                    <div><strong>Phone:</strong> <span className="text-blue-700">{submission.nominee_phone}</span></div>
+                    {submission.nominee_website && (
+                      <div><strong>Website:</strong> <span className="text-blue-700 text-xs break-all">{submission.nominee_website}</span></div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Nominator Info */}
+                <div className="bg-gradient-to-br from-green-50 to-emerald-100 p-4 rounded-lg border border-green-200">
+                  <h5 className="font-bold text-green-800 mb-3 flex items-center gap-2">
+                    📝 Nominator Information
+                  </h5>
+                  <div className="space-y-2 text-sm">
+                    <div><strong>Name:</strong> <span className="text-green-700">{submission.nominator_first} {submission.nominator_last}</span></div>
+                    <div><strong>Email:</strong> <span className="text-green-700">{submission.nominator_email}</span></div>
+                    <div><strong>Phone:</strong> <span className="text-green-700">{submission.nominator_phone || 'Not provided'}</span></div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Nomination Reason */}
+              <div className="bg-gradient-to-br from-yellow-50 to-orange-100 p-4 rounded-lg border border-yellow-200">
+                <h5 className="font-bold text-orange-800 mb-3 flex items-center gap-2">
+                  💬 Nomination Reason
+                </h5>
+                <p className="text-orange-700 text-sm leading-relaxed italic">
+                  "{submission.reason}"
+                </p>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+      
+      <div className="bg-gray-50 p-4 text-center border-t">
+        <p className="text-sm text-gray-600">
+          ⏰ These submissions will be sent automatically when the countdown reaches 0
+        </p>
+      </div>
+    </div>
+  )
+}
+
 const NominationForm = ({ autoSubmit, toggleAutoSubmit, countdown, currentSubmissions, config, onConfigUpdate }) => {
   const [categories, setCategories] = useState([])
   const [formData, setFormData] = useState({
@@ -126,45 +238,7 @@ ${Object.entries(details.payload || {}).map(([k,v]) => `• ${k}: ${v}`).join('\
       </div>
 
       {autoSubmit && currentSubmissions.length > 0 && (
-        <div className="bg-gradient-to-r from-eloy-primary to-eloy-secondary p-6 rounded-xl mb-8 text-white shadow-lg">
-          <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-            📝 Next 3 Submissions
-          </h3>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-            {currentSubmissions.map((submission, index) => (
-              <div key={index} className="bg-white bg-opacity-20 p-4 rounded-lg border-2 border-white border-opacity-30">
-                <div className="font-bold text-lg mb-3 text-center">
-                  {index === 0 ? '👗 Fashion Award' : index === 1 ? '💰 Finance Award' : '🎓 Education/Tech Award'}
-                </div>
-                <div className="text-sm space-y-2">
-                  <div className="bg-white bg-opacity-10 p-2 rounded">
-                    <strong>👤 Nominee:</strong><br/>
-                    <span className="text-yellow-200">{submission.nominee_first} {submission.nominee_last}</span>
-                  </div>
-                  <div className="bg-white bg-opacity-10 p-2 rounded">
-                    <strong>🏆 Category:</strong><br/>
-                    <span className="text-yellow-200">{submission.category}</span>
-                  </div>
-                  <div className="bg-white bg-opacity-10 p-2 rounded">
-                    <strong>📧 Nominator:</strong><br/>
-                    <span className="text-yellow-200">{submission.nominator_first} {submission.nominator_last}</span>
-                  </div>
-                  <div className="bg-white bg-opacity-10 p-2 rounded">
-                    <strong>📱 Instagram:</strong><br/>
-                    <span className="text-yellow-200 text-xs break-all">{submission.nominee_instagram}</span>
-                  </div>
-                  <div className="bg-white bg-opacity-10 p-2 rounded">
-                    <strong>💬 Reason:</strong><br/>
-                    <span className="text-yellow-200 text-xs leading-relaxed">{submission.reason?.substring(0, 120)}...</span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="mt-4 text-center text-sm opacity-90">
-            <p>✨ These 3 nominations will be submitted automatically when the countdown reaches 0</p>
-          </div>
-        </div>
+        <SubmissionPreview currentSubmissions={currentSubmissions} />
       )}
 
       {showConfig && <ConfigPanel config={config} onConfigUpdate={onConfigUpdate} />}

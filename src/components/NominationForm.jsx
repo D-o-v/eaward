@@ -3,30 +3,22 @@ import axios from 'axios'
 import { autoFillConfig, generateRandomNominator } from '../config/autoFill'
 import ConfigPanel from './ConfigPanel'
 
-// Submission Preview Component with Tabs
-const SubmissionPreview = ({ currentSubmissions }) => {
+// Submission Tabs Component
+const SubmissionTabs = ({ currentSubmissions }) => {
   const [activeTab, setActiveTab] = useState(0)
-
-  if (!currentSubmissions || currentSubmissions.length === 0) return null
 
   const getTabInfo = (index) => {
     switch(index) {
       case 0: return { icon: '👗', title: 'Fashion', color: 'from-pink-500 to-purple-600' }
       case 1: return { icon: '💰', title: 'Finance', color: 'from-green-500 to-blue-600' }
-      case 2: return { icon: '🎓', title: 'Education/Tech', color: 'from-blue-500 to-indigo-600' }
+      case 2: return { icon: '🎓', title: 'Education', color: 'from-blue-500 to-indigo-600' }
       default: return { icon: '📝', title: 'Submission', color: 'from-gray-500 to-gray-600' }
     }
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-xl mb-8 overflow-hidden border-2 border-eloy-primary border-opacity-20">
-      <div className="bg-gradient-to-r from-eloy-primary to-eloy-secondary p-4">
-        <h3 className="text-xl font-bold text-white text-center flex items-center justify-center gap-2">
-          🎯 Next 3 Auto-Submissions
-        </h3>
-      </div>
-      
-      {/* Tabs */}
+    <div className="bg-white rounded-xl shadow-xl overflow-hidden border-2 border-eloy-primary border-opacity-20">
+      {/* Tab Headers */}
       <div className="flex border-b border-gray-200">
         {currentSubmissions.map((_, index) => {
           const tabInfo = getTabInfo(index)
@@ -36,7 +28,7 @@ const SubmissionPreview = ({ currentSubmissions }) => {
               onClick={() => setActiveTab(index)}
               className={`flex-1 py-4 px-6 text-center font-medium transition-all duration-300 ${
                 activeTab === index
-                  ? 'bg-gradient-to-r ' + tabInfo.color + ' text-white border-b-4 border-white'
+                  ? `bg-gradient-to-r ${tabInfo.color} text-white`
                   : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
               }`}
             >
@@ -55,7 +47,7 @@ const SubmissionPreview = ({ currentSubmissions }) => {
           const tabInfo = getTabInfo(index)
           
           return (
-            <div key={index} className="space-y-4">
+            <div key={index} className="space-y-6">
               <div className={`bg-gradient-to-r ${tabInfo.color} text-white p-4 rounded-lg text-center`}>
                 <div className="text-3xl mb-2">{tabInfo.icon}</div>
                 <h4 className="text-xl font-bold">{submission.category}</h4>
@@ -65,10 +57,10 @@ const SubmissionPreview = ({ currentSubmissions }) => {
                 {/* Nominee Info */}
                 <div className="bg-gradient-to-br from-blue-50 to-indigo-100 p-4 rounded-lg border border-blue-200">
                   <h5 className="font-bold text-blue-800 mb-3 flex items-center gap-2">
-                    👤 Nominee Information
+                    🏆 Nominee Information
                   </h5>
                   <div className="space-y-2 text-sm">
-                    <div><strong>Name:</strong> <span className="text-blue-700">{submission.nominee_first} {submission.nominee_last}</span></div>
+                    <div><strong>Name:</strong> <span className="text-blue-700 font-bold">{submission.nominee_first} {submission.nominee_last}</span></div>
                     <div><strong>Instagram:</strong> <span className="text-blue-700 break-all">{submission.nominee_instagram}</span></div>
                     <div><strong>LinkedIn:</strong> <span className="text-blue-700 text-xs break-all">{submission.nominee_linkedin}</span></div>
                     <div><strong>Email:</strong> <span className="text-blue-700">{submission.nominee_email}</span></div>
@@ -82,7 +74,7 @@ const SubmissionPreview = ({ currentSubmissions }) => {
                 {/* Nominator Info */}
                 <div className="bg-gradient-to-br from-green-50 to-emerald-100 p-4 rounded-lg border border-green-200">
                   <h5 className="font-bold text-green-800 mb-3 flex items-center gap-2">
-                    📝 Nominator Information
+                    👤 Nominator Information
                   </h5>
                   <div className="space-y-2 text-sm">
                     <div><strong>Name:</strong> <span className="text-green-700">{submission.nominator_first} {submission.nominator_last}</span></div>
@@ -97,9 +89,11 @@ const SubmissionPreview = ({ currentSubmissions }) => {
                 <h5 className="font-bold text-orange-800 mb-3 flex items-center gap-2">
                   💬 Nomination Reason
                 </h5>
-                <p className="text-orange-700 text-sm leading-relaxed italic">
-                  "{submission.reason}"
-                </p>
+                <div className="bg-white p-3 rounded border border-orange-200">
+                  <p className="text-orange-700 text-sm leading-relaxed italic">
+                    "{submission.reason}"
+                  </p>
+                </div>
               </div>
             </div>
           )
@@ -114,6 +108,8 @@ const SubmissionPreview = ({ currentSubmissions }) => {
     </div>
   )
 }
+
+
 
 const NominationForm = ({ autoSubmit, toggleAutoSubmit, countdown, currentSubmissions, config, onConfigUpdate }) => {
   const [categories, setCategories] = useState([])
@@ -229,354 +225,254 @@ ${Object.entries(details.payload || {}).map(([k,v]) => `• ${k}: ${v}`).join('\
         </div>
       )}
 
-      <div className="text-center mb-8">
-        <div className="flex justify-center gap-4 mb-6">
-          <button
-            type="button"
-            onClick={() => setShowConfig(!showConfig)}
-            className="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg transition-all duration-300 shadow-lg"
-          >
-            ⚙️ Configuration
-          </button>
+      {!autoSubmit && (
+        <div className="text-center mb-8">
           <button
             type="button"
             onClick={toggleAutoSubmit}
-            className={`px-12 py-6 rounded-2xl text-2xl font-bold transition-all duration-300 shadow-2xl transform hover:scale-105 ${
-              autoSubmit 
-                ? 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white' 
-                : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white'
-            }`}
+            className="px-12 py-6 rounded-2xl text-2xl font-bold transition-all duration-300 shadow-2xl transform hover:scale-105 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white"
           >
-            {autoSubmit ? '⏹️ STOP AUTO NOMINATIONS' : '🚀 START AUTO NOMINATIONS'}
+            🚀 START AUTO NOMINATIONS
           </button>
         </div>
+      )}
 
-      </div>
-
-      {autoSubmit && currentSubmissions && currentSubmissions.length > 0 ? (
-        <div className="space-y-8">
-          {/* Header */}
-          <div className="text-center bg-gradient-to-r from-eloy-primary to-eloy-secondary p-6 rounded-xl text-white">
-            <h2 className="text-2xl font-bold mb-2">🎯 Next 3 Auto-Submissions</h2>
-            <p className="text-lg">These nominations will be submitted automatically when countdown reaches 0</p>
-          </div>
-          
-          {/* Three Submission Forms */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {currentSubmissions.map((submission, index) => {
-              const colors = [
-                { bg: 'from-pink-500 to-purple-600', border: 'border-pink-200', text: 'text-pink-800' },
-                { bg: 'from-green-500 to-blue-600', border: 'border-green-200', text: 'text-green-800' },
-                { bg: 'from-blue-500 to-indigo-600', border: 'border-blue-200', text: 'text-blue-800' }
-              ]
-              const icons = ['👗', '💰', '🎓']
-              const titles = ['Fashion Award', 'Finance Award', 'Education/Tech Award']
-              
-              return (
-                <div key={index} className="bg-white rounded-xl shadow-xl border-2 border-gray-100 overflow-hidden transform hover:scale-105 transition-all duration-300">
-                  {/* Header */}
-                  <div className={`bg-gradient-to-r ${colors[index].bg} p-4 text-white text-center`}>
-                    <div className="text-3xl mb-2">{icons[index]}</div>
-                    <h3 className="font-bold text-lg">{titles[index]}</h3>
-                    <p className="text-sm opacity-90">{submission.category}</p>
-                  </div>
-                  
-                  {/* Form Content */}
-                  <div className="p-6 space-y-4">
-                    {/* Nominator Info */}
-                    <div className="bg-gradient-to-br from-green-50 to-emerald-100 p-4 rounded-lg border border-green-200">
-                      <h4 className="font-bold text-green-800 mb-3 flex items-center gap-2">
-                        👤 Nominator (Person Submitting)
-                      </h4>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span className="font-medium">Name:</span>
-                          <span className="text-green-700 font-semibold">{submission.nominator_first} {submission.nominator_last}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="font-medium">Email:</span>
-                          <span className="text-green-700 text-xs">{submission.nominator_email}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="font-medium">Phone:</span>
-                          <span className="text-green-700">{submission.nominator_phone || 'Not provided'}</span>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* Nominee Info */}
-                    <div className="bg-gradient-to-br from-blue-50 to-indigo-100 p-4 rounded-lg border border-blue-200">
-                      <h4 className="font-bold text-blue-800 mb-3 flex items-center gap-2">
-                        🏆 Nominee (Person Being Nominated)
-                      </h4>
-                      <div className="space-y-2 text-sm">
-                        <div className="flex justify-between">
-                          <span className="font-medium">Name:</span>
-                          <span className="text-blue-700 font-bold text-lg">{submission.nominee_first} {submission.nominee_last}</span>
-                        </div>
-                        <div className="border-t pt-2 mt-2">
-                          <div className="mb-1"><strong>Instagram:</strong></div>
-                          <div className="text-blue-700 text-xs break-all bg-white p-2 rounded">{submission.nominee_instagram}</div>
-                        </div>
-                        <div>
-                          <div className="mb-1"><strong>LinkedIn:</strong></div>
-                          <div className="text-blue-700 text-xs break-all bg-white p-2 rounded">{submission.nominee_linkedin}</div>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="font-medium">Email:</span>
-                          <span className="text-blue-700 text-xs">{submission.nominee_email}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="font-medium">Phone:</span>
-                          <span className="text-blue-700">{submission.nominee_phone}</span>
-                        </div>
-                        {submission.nominee_website && (
-                          <div>
-                            <div className="mb-1"><strong>Website:</strong></div>
-                            <div className="text-blue-700 text-xs break-all bg-white p-2 rounded">{submission.nominee_website}</div>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    
-                    {/* Nomination Reason */}
-                    <div className="bg-gradient-to-br from-yellow-50 to-orange-100 p-4 rounded-lg border border-yellow-200">
-                      <h4 className="font-bold text-orange-800 mb-3 flex items-center gap-2">
-                        💬 Nomination Reason
-                      </h4>
-                      <div className="bg-white p-3 rounded border border-orange-200">
-                        <p className="text-orange-700 text-sm leading-relaxed italic">
-                          "{submission.reason}"
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Footer */}
-                  <div className={`bg-gradient-to-r ${colors[index].bg} p-3 text-center`}>
-                    <p className="text-white text-sm font-medium">
-                      ✨ Ready for Auto-Submission
-                    </p>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
+      {autoSubmit && currentSubmissions && currentSubmissions.length === 3 ? (
+        <SubmissionTabs currentSubmissions={currentSubmissions} />
       ) : (
         <div>
-          {showConfig && <ConfigPanel config={config} onConfigUpdate={onConfigUpdate} />}
+          {/* <div className="text-center mb-8">
+            <button
+              type="button"
+              onClick={() => setShowConfig(!showConfig)}
+              className="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg transition-all duration-300 shadow-lg mr-4"
+            >
+              ⚙️ Configuration
+            </button>
+          </div>
           
-          <form onSubmit={handleSubmit} className="space-y-8">
-        <section>
-          <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Your Name *
-              </label>
-              <div className="grid grid-cols-2 gap-4">
-                <input
-                  type="text"
-                  name="nominator_first"
-                  value={formData.nominator_first || ''}
-                  onChange={handleChange}
-                  placeholder="First"
-                  required
-                  readOnly={autoSubmit}
-                  className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-eloy-primary focus:border-transparent transition-all ${autoSubmit ? 'bg-gray-100' : ''}`}
-                />
-                <input
-                  type="text"
-                  name="nominator_last"
-                  value={formData.nominator_last || ''}
-                  onChange={handleChange}
-                  placeholder="Last"
-                  required
-                  readOnly={autoSubmit}
-                  className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-eloy-primary focus:border-transparent transition-all ${autoSubmit ? 'bg-gray-100' : ''}`}
-                />
+          {showConfig && <ConfigPanel config={config} onConfigUpdate={onConfigUpdate} />} */}
+          
+          {/* <form onSubmit={handleSubmit} className="space-y-8">
+            <section>
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Your Name *
+                  </label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <input
+                      type="text"
+                      name="nominator_first"
+                      value={formData.nominator_first || ''}
+                      onChange={handleChange}
+                      placeholder="First"
+                      required
+                      readOnly={autoSubmit}
+                      className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-eloy-primary focus:border-transparent transition-all ${autoSubmit ? 'bg-gray-100' : ''}`}
+                    />
+                    <input
+                      type="text"
+                      name="nominator_last"
+                      value={formData.nominator_last || ''}
+                      onChange={handleChange}
+                      placeholder="Last"
+                      required
+                      readOnly={autoSubmit}
+                      className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-eloy-primary focus:border-transparent transition-all ${autoSubmit ? 'bg-gray-100' : ''}`}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Your phone number
+                  </label>
+                  <div className="flex">
+                    <span className="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-r-0 border-gray-300 rounded-l-md">
+                      Nigeria +234
+                    </span>
+                    <input
+                      type="tel"
+                      name="nominator_phone"
+                      value={formData.nominator_phone?.replace('+234', '') || ''}
+                      onChange={(e) => handleChange({target: {name: 'nominator_phone', value: '+234' + e.target.value}})}
+                      placeholder="0802 123 4567"
+                      className="flex-1 px-4 py-3 border border-gray-300 rounded-r-lg focus:ring-2 focus:ring-eloy-primary focus:border-transparent transition-all"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Your email address *
+                  </label>
+                  <input
+                    type="email"
+                    name="nominator_email"
+                    value={formData.nominator_email}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-eloy-primary focus:border-transparent transition-all"
+                  />
+                </div>
               </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Your phone number
-              </label>
-              <div className="flex">
-                <span className="inline-flex items-center px-3 text-sm text-gray-900 bg-gray-200 border border-r-0 border-gray-300 rounded-l-md">
-                  Nigeria +234
-                </span>
-                <input
-                  type="tel"
-                  name="nominator_phone"
-                  value={formData.nominator_phone?.replace('+234', '') || ''}
-                  onChange={(e) => handleChange({target: {name: 'nominator_phone', value: '+234' + e.target.value}})}
-                  placeholder="0802 123 4567"
-                  className="flex-1 px-4 py-3 border border-gray-300 rounded-r-lg focus:ring-2 focus:ring-eloy-primary focus:border-transparent transition-all"
-                />
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Your email address *
-              </label>
-              <input
-                type="email"
-                name="nominator_email"
-                value={formData.nominator_email}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-eloy-primary focus:border-transparent transition-all"
-              />
-            </div>
-          </div>
-        </section>
+            </section>
 
-        <section>
-          <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Nomination Category *
-              </label>
-              <select
-                name="category"
-                value={formData.category}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-eloy-primary focus:border-transparent transition-all"
+            <section>
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Nomination Category *
+                  </label>
+                  <select
+                    name="category"
+                    value={formData.category}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-eloy-primary focus:border-transparent transition-all"
+                  >
+                    <option value="">ELOY Award for Entrepreneur</option>
+                    {categories.map((category, index) => (
+                      <option key={index} value={category}>
+                        {category}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Nominee name *
+                  </label>
+                  <div className="grid grid-cols-2 gap-4">
+                    <input
+                      type="text"
+                      name="nominee_first"
+                      value={formData.nominee_first || ''}
+                      onChange={handleChange}
+                      placeholder="First"
+                      required
+                      readOnly={autoSubmit}
+                      className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-eloy-primary focus:border-transparent transition-all ${autoSubmit ? 'bg-gray-100' : ''}`}
+                    />
+                    <input
+                      type="text"
+                      name="nominee_last"
+                      value={formData.nominee_last || ''}
+                      onChange={handleChange}
+                      placeholder="Last"
+                      required
+                      readOnly={autoSubmit}
+                      className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-eloy-primary focus:border-transparent transition-all ${autoSubmit ? 'bg-gray-100' : ''}`}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Nominee Instagram Handle *
+                  </label>
+                  <input
+                    type="text"
+                    name="nominee_instagram"
+                    value={formData.nominee_instagram}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-eloy-primary focus:border-transparent transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Nominee Linkedin page *
+                  </label>
+                  <input
+                    type="text"
+                    name="nominee_linkedin"
+                    value={formData.nominee_linkedin}
+                    onChange={handleChange}
+                    required
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-eloy-primary focus:border-transparent transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Reason for nomination
+                  </label>
+                  <textarea
+                    name="reason"
+                    value={formData.reason}
+                    onChange={handleChange}
+                    rows={4}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-eloy-primary focus:border-transparent transition-all resize-y"
+                  />
+                </div>
+              </div>
+            </section>
+
+            <section>
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Nominee email address (if known)
+                  </label>
+                  <input
+                    type="email"
+                    name="nominee_email"
+                    value={formData.nominee_email}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-eloy-primary focus:border-transparent transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Nominee Phone number (if known)
+                  </label>
+                  <input
+                    type="tel"
+                    name="nominee_phone"
+                    value={formData.nominee_phone}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-eloy-primary focus:border-transparent transition-all"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Nominee website
+                  </label>
+                  <input
+                    type="url"
+                    name="nominee_website"
+                    value={formData.nominee_website}
+                    onChange={handleChange}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-eloy-primary focus:border-transparent transition-all"
+                  />
+                </div>
+              </div>
+            </section>
+
+            <section>
+              <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg">
+                <input
+                  type="checkbox"
+                  id="consent"
+                  checked={true}
+                  readOnly
+                  className="mt-1 h-4 w-4 text-eloy-primary focus:ring-eloy-primary border-gray-300 rounded"
+                />
+                <label htmlFor="consent" className="text-sm text-gray-700">
+                  By submitting your data, you consent that your data can be processed by ELOY Awards Foundation for registration & marketing purposes in accordance with our privacy policy * *
+                  <span className="block mt-1 font-semibold text-green-600">YES</span>
+                </label>
+              </div>
+            </section>
+
+            <div className="flex justify-center">
+              <button
+                type="submit"
+                disabled={loading}
+                className="px-8 py-4 bg-gradient-to-r from-eloy-primary to-eloy-secondary text-white font-bold rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <option value="">ELOY Award for Entrepreneur</option>
-                {categories.map((category, index) => (
-                  <option key={index} value={category}>
-                    {category}
-                  </option>
-                ))}
-              </select>
+                {loading ? '⏳ Submitting...' : '🚀 Submit Nomination'}
+              </button>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Nominee name *
-              </label>
-              <div className="grid grid-cols-2 gap-4">
-                <input
-                  type="text"
-                  name="nominee_first"
-                  value={formData.nominee_first || ''}
-                  onChange={handleChange}
-                  placeholder="First"
-                  required
-                  readOnly={autoSubmit}
-                  className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-eloy-primary focus:border-transparent transition-all ${autoSubmit ? 'bg-gray-100' : ''}`}
-                />
-                <input
-                  type="text"
-                  name="nominee_last"
-                  value={formData.nominee_last || ''}
-                  onChange={handleChange}
-                  placeholder="Last"
-                  required
-                  readOnly={autoSubmit}
-                  className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-eloy-primary focus:border-transparent transition-all ${autoSubmit ? 'bg-gray-100' : ''}`}
-                />
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Nominee Instagram Handle *
-              </label>
-              <input
-                type="text"
-                name="nominee_instagram"
-                value={formData.nominee_instagram}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-eloy-primary focus:border-transparent transition-all"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Nominee Linkedin page *
-              </label>
-              <input
-                type="text"
-                name="nominee_linkedin"
-                value={formData.nominee_linkedin}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-eloy-primary focus:border-transparent transition-all"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Reason for nomination
-              </label>
-              <textarea
-                name="reason"
-                value={formData.reason}
-                onChange={handleChange}
-                rows={4}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-eloy-primary focus:border-transparent transition-all resize-y"
-              />
-            </div>
-          </div>
-        </section>
-
-        <section>
-          <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Nominee email address (if known)
-              </label>
-              <input
-                type="email"
-                name="nominee_email"
-                value={formData.nominee_email}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-eloy-primary focus:border-transparent transition-all"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Nominee Phone number (if known)
-              </label>
-              <input
-                type="tel"
-                name="nominee_phone"
-                value={formData.nominee_phone}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-eloy-primary focus:border-transparent transition-all"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Nominee website
-              </label>
-              <input
-                type="url"
-                name="nominee_website"
-                value={formData.nominee_website}
-                onChange={handleChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-eloy-primary focus:border-transparent transition-all"
-              />
-            </div>
-          </div>
-        </section>
-
-        <section>
-          <div className="flex items-start gap-3 p-4 bg-gray-50 rounded-lg">
-            <input
-              type="checkbox"
-              id="consent"
-              checked={true}
-              readOnly
-              className="mt-1 h-4 w-4 text-eloy-primary focus:ring-eloy-primary border-gray-300 rounded"
-            />
-            <label htmlFor="consent" className="text-sm text-gray-700">
-              By submitting your data, you consent that your data can be processed by ELOY Awards Foundation for registration & marketing purposes in accordance with our privacy policy * *
-              <span className="block mt-1 font-semibold text-green-600">YES</span>
-            </label>
-          </div>
-        </section>
-          </form>
+          </form> */}
         </div>
       )}
     </div>

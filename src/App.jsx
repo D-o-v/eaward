@@ -4,7 +4,7 @@ import NominationForm from './components/NominationForm'
 import SubmissionsList from './components/SubmissionsList'
 import { autoFillConfig, generateRandomNominator, nominationReasons } from './config/autoFill'
 
-// Fashion-specific reasons for Ngozi
+// Fashion-specific reasons for Ngozi Chiadika
 const fashionReasons = [
   'She has revolutionized African fashion promotion, creating platforms that showcase our designers to global audiences.',
   'Her innovative marketing strategies have helped countless fashion brands gain international recognition and grow their businesses.',
@@ -161,12 +161,12 @@ const fashionReasons = [
   'She continues to inspire, mentor, and empower others to carry forward the mission of promoting African fashion excellence.'
 ]
 
-// Hardcoded nominees
+// Hardcoded nominees - these are the people being nominated
 const nominees = {
   fashion: {
     firstName: 'Ngozi',
     lastName: 'Chiadika',
-    instagram: ['https://www.instagram.com/afrifashionpromotion?igsh=a3hqNmNwMW9ocXI2', 'https://www.instagram.com/gozifego?igsh=MWY3M3FzeXIybmp4ZQ=='],
+    instagram: 'https://www.instagram.com/afrifashionpromotion?igsh=a3hqNmNwMW9ocXI2',
     linkedin: 'https://www.linkedin.com/in/ngozi-chiadika?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app',
     email: 'afrifashionpromotion@gmail.com',
     phone: '+234 8165924260',
@@ -177,23 +177,24 @@ const nominees = {
   finance: {
     firstName: 'Oluchukwu',
     lastName: 'Chiadika',
-    instagram: ['https://www.instagram.com/personalfinancegirl', '@personalfinancegirl'],
+    instagram: 'https://www.instagram.com/personalfinancegirl',
     linkedin: 'https://www.linkedin.com/in/oluchukwu-chiadika-29366311b/',
     email: 'yourpersonalfinancegirl@gmail.com',
     phone: '+234 808 543 9337',
     website: 'https://yourpersonalfinancegirl.com/',
     categories: ['ELOY Award for Finance', 'ELOY Award in Education', 'ELOY Award for Tech'],
     reasons: {
-      finance: nominationReasons, // Use all nomination reasons for finance
-      education: nominationReasons, // Use all nomination reasons for education
-      tech: nominationReasons // Use all nomination reasons for tech
+      finance: nominationReasons.slice(0, 50), // Use first 50 reasons for finance
+      education: nominationReasons.slice(50, 100), // Use next 50 for education
+      tech: nominationReasons.slice(100, 150) // Use next 50 for tech
     }
   }
 }
 
 const generateNomineeData = (nominee, category) => {
-  const randomInstagram = Array.isArray(nominee.instagram) 
-    ? nominee.instagram[Math.floor(Math.random() * nominee.instagram.length)]
+  // Use first Instagram if array, otherwise use as is
+  const instagram = Array.isArray(nominee.instagram) 
+    ? nominee.instagram[0]
     : nominee.instagram
   
   let reasons
@@ -205,20 +206,20 @@ const generateNomineeData = (nominee, category) => {
     reasons = nominee.reasons[categoryKey]
   }
   
-  // Generate random nominator data
+  // Generate random nominator data (person submitting the nomination)
   const nominatorData = generateRandomNominator()
   
   return {
-    // Nominator (person submitting)
+    // Nominator (person submitting) - this should be random
     nominator_first: nominatorData.nominator_first,
     nominator_last: nominatorData.nominator_last,
     nominator_email: nominatorData.nominator_email,
     nominator_phone: nominatorData.nominator_phone,
     
-    // Nominee (person being nominated)
+    // Nominee (person being nominated) - this should be fixed
     nominee_first: nominee.firstName,
     nominee_last: nominee.lastName,
-    nominee_instagram: randomInstagram,
+    nominee_instagram: instagram,
     nominee_linkedin: nominee.linkedin,
     nominee_email: nominee.email,
     nominee_phone: nominee.phone,
@@ -226,7 +227,7 @@ const generateNomineeData = (nominee, category) => {
     
     // Nomination details
     category: category,
-    reason: reasons[Math.floor(Math.random() * reasons.length)]
+    reason: reasons[Math.floor(Math.random() * reasons.length)] // Random reason from appropriate category
   }
 }
 
@@ -260,15 +261,14 @@ function App() {
   const generateThreeSubmissions = () => {
     const submissions = []
     
-    // 1. Fashion submission
+    // 1. Fashion submission - Ngozi Chiadika
     submissions.push(generateNomineeData(nominees.fashion, nominees.fashion.category))
     
-    // 2. Finance submission (always Finance)
+    // 2. Finance submission - Oluchukwu Chiadika
     submissions.push(generateNomineeData(nominees.finance, 'ELOY Award for Finance'))
     
-    // 3. Random Education or Tech submission
-    const randomCategory = Math.random() < 0.5 ? 'ELOY Award in Education' : 'ELOY Award for Tech'
-    submissions.push(generateNomineeData(nominees.finance, randomCategory))
+    // 3. Education submission - Oluchukwu Chiadika
+    submissions.push(generateNomineeData(nominees.finance, 'ELOY Award in Education'))
     
     return submissions
   }

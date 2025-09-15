@@ -24,7 +24,6 @@ function App() {
       ...generateRandomNominator(newConfig)
     })
   }
-  const submitIntervalRef = useRef(null)
   const countdownIntervalRef = useRef(null)
 
   const getRandomInterval = () => {
@@ -57,27 +56,11 @@ function App() {
     setIsSubmitting(false)
     
     console.log('Next submission in:', Math.ceil(interval / 1000), 'seconds')
-    
-    const timeout = setTimeout(async () => {
-      if (!autoSubmit) return
-      
-      setIsSubmitting(true)
-      setCountdown(0)
-      
-      const result = await handleSubmit(newData)
-      console.log('Auto-submission result:', result)
-      
-      // Schedule next submission
-      scheduleNextSubmit()
-    }, interval)
-    
-    submitIntervalRef.current = timeout
   }
 
   const toggleAutoSubmit = () => {
     if (autoSubmit) {
       // Stop auto-submission
-      clearTimeout(submitIntervalRef.current)
       clearInterval(countdownIntervalRef.current)
       setAutoSubmit(false)
       setCountdown(0)
@@ -94,7 +77,7 @@ function App() {
       }
       setCurrentFormData(firstData)
       
-      // Start with random interval (not fixed 3s)
+      // Start with random interval
       const interval = getRandomInterval()
       const nextTime = Date.now() + interval
       setNextSubmitTime(nextTime)
@@ -102,21 +85,6 @@ function App() {
       setIsSubmitting(false)
       
       console.log('First submission in:', Math.ceil(interval / 1000), 'seconds')
-      
-      const timeout = setTimeout(async () => {
-        if (!autoSubmit) return
-        
-        setIsSubmitting(true)
-        setCountdown(0)
-        
-        const result = await handleSubmit(firstData)
-        console.log('First auto-submission result:', result)
-        
-        // Continue the cycle
-        scheduleNextSubmit()
-      }, interval)
-      
-      submitIntervalRef.current = timeout
     }
   }
 
@@ -129,6 +97,8 @@ function App() {
         
         if (remaining === 0) {
           clearInterval(countdownIntervalRef.current)
+          // Trigger submission when countdown reaches 0
+          triggerSubmission()
         }
       }
       
@@ -152,10 +122,23 @@ function App() {
     }
   }, [autoSubmit, nextSubmitTime, isSubmitting])
 
+  // Trigger submission function
+  const triggerSubmission = async () => {
+    if (!autoSubmit || isSubmitting) return
+    
+    setIsSubmitting(true)
+    setCountdown(0)
+    
+    const result = await handleSubmit(currentFormData)
+    console.log('Auto-submission result:', result)
+    
+    // Schedule next submission automatically
+    scheduleNextSubmit()
+  }
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      if (submitIntervalRef.current) clearTimeout(submitIntervalRef.current)
       if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current)
     }
   }, [])

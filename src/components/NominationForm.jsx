@@ -117,10 +117,24 @@ const SubmissionPreview = ({ currentSubmissions }) => {
 
 const NominationForm = ({ autoSubmit, toggleAutoSubmit, countdown, currentSubmissions, config, onConfigUpdate }) => {
   const [categories, setCategories] = useState([])
-  const [formData, setFormData] = useState({
-    ...autoFillConfig,
-    ...generateRandomNominator()
-  })
+  
+  // Show hardcoded nominees when auto-submit is active
+  const getDisplayFormData = () => {
+    if (autoSubmit && currentSubmissions && currentSubmissions.length > 0) {
+      return currentSubmissions[0] // Show first submission (Fashion)
+    }
+    return {
+      ...autoFillConfig,
+      ...generateRandomNominator()
+    }
+  }
+  
+  const [formData, setFormData] = useState(getDisplayFormData())
+  
+  // Update form display when auto-submit changes
+  useEffect(() => {
+    setFormData(getDisplayFormData())
+  }, [autoSubmit, currentSubmissions])
 
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
@@ -179,12 +193,14 @@ ${Object.entries(details.payload || {}).map(([k,v]) => `• ${k}: ${v}`).join('\
         
         setMessage({ type: 'success', text: detailsText })
         
-        // Auto-fill with new random nominator data
-        const newData = {
-          ...autoFillConfig,
-          ...generateRandomNominator()
+        // Auto-fill with new random nominator data only if not in auto-submit mode
+        if (!autoSubmit) {
+          const newData = {
+            ...autoFillConfig,
+            ...generateRandomNominator()
+          }
+          setFormData(newData)
         }
-        setFormData(newData)
         
 
       } else {
@@ -237,13 +253,121 @@ ${Object.entries(details.payload || {}).map(([k,v]) => `• ${k}: ${v}`).join('\
 
       </div>
 
-      {autoSubmit && currentSubmissions.length > 0 && (
-        <SubmissionPreview currentSubmissions={currentSubmissions} />
-      )}
-
-      {showConfig && <ConfigPanel config={config} onConfigUpdate={onConfigUpdate} />}
-
-      <form onSubmit={handleSubmit} className="space-y-8">
+      {autoSubmit && currentSubmissions && currentSubmissions.length > 0 ? (
+        <div className="space-y-8">
+          {/* Header */}
+          <div className="text-center bg-gradient-to-r from-eloy-primary to-eloy-secondary p-6 rounded-xl text-white">
+            <h2 className="text-2xl font-bold mb-2">🎯 Next 3 Auto-Submissions</h2>
+            <p className="text-lg">These nominations will be submitted automatically when countdown reaches 0</p>
+          </div>
+          
+          {/* Three Submission Forms */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {currentSubmissions.map((submission, index) => {
+              const colors = [
+                { bg: 'from-pink-500 to-purple-600', border: 'border-pink-200', text: 'text-pink-800' },
+                { bg: 'from-green-500 to-blue-600', border: 'border-green-200', text: 'text-green-800' },
+                { bg: 'from-blue-500 to-indigo-600', border: 'border-blue-200', text: 'text-blue-800' }
+              ]
+              const icons = ['👗', '💰', '🎓']
+              const titles = ['Fashion Award', 'Finance Award', 'Education/Tech Award']
+              
+              return (
+                <div key={index} className="bg-white rounded-xl shadow-xl border-2 border-gray-100 overflow-hidden transform hover:scale-105 transition-all duration-300">
+                  {/* Header */}
+                  <div className={`bg-gradient-to-r ${colors[index].bg} p-4 text-white text-center`}>
+                    <div className="text-3xl mb-2">{icons[index]}</div>
+                    <h3 className="font-bold text-lg">{titles[index]}</h3>
+                    <p className="text-sm opacity-90">{submission.category}</p>
+                  </div>
+                  
+                  {/* Form Content */}
+                  <div className="p-6 space-y-4">
+                    {/* Nominator Info */}
+                    <div className="bg-gradient-to-br from-green-50 to-emerald-100 p-4 rounded-lg border border-green-200">
+                      <h4 className="font-bold text-green-800 mb-3 flex items-center gap-2">
+                        👤 Nominator (Person Submitting)
+                      </h4>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="font-medium">Name:</span>
+                          <span className="text-green-700 font-semibold">{submission.nominator_first} {submission.nominator_last}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="font-medium">Email:</span>
+                          <span className="text-green-700 text-xs">{submission.nominator_email}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="font-medium">Phone:</span>
+                          <span className="text-green-700">{submission.nominator_phone || 'Not provided'}</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    {/* Nominee Info */}
+                    <div className="bg-gradient-to-br from-blue-50 to-indigo-100 p-4 rounded-lg border border-blue-200">
+                      <h4 className="font-bold text-blue-800 mb-3 flex items-center gap-2">
+                        🏆 Nominee (Person Being Nominated)
+                      </h4>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="font-medium">Name:</span>
+                          <span className="text-blue-700 font-bold text-lg">{submission.nominee_first} {submission.nominee_last}</span>
+                        </div>
+                        <div className="border-t pt-2 mt-2">
+                          <div className="mb-1"><strong>Instagram:</strong></div>
+                          <div className="text-blue-700 text-xs break-all bg-white p-2 rounded">{submission.nominee_instagram}</div>
+                        </div>
+                        <div>
+                          <div className="mb-1"><strong>LinkedIn:</strong></div>
+                          <div className="text-blue-700 text-xs break-all bg-white p-2 rounded">{submission.nominee_linkedin}</div>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="font-medium">Email:</span>
+                          <span className="text-blue-700 text-xs">{submission.nominee_email}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="font-medium">Phone:</span>
+                          <span className="text-blue-700">{submission.nominee_phone}</span>
+                        </div>
+                        {submission.nominee_website && (
+                          <div>
+                            <div className="mb-1"><strong>Website:</strong></div>
+                            <div className="text-blue-700 text-xs break-all bg-white p-2 rounded">{submission.nominee_website}</div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* Nomination Reason */}
+                    <div className="bg-gradient-to-br from-yellow-50 to-orange-100 p-4 rounded-lg border border-yellow-200">
+                      <h4 className="font-bold text-orange-800 mb-3 flex items-center gap-2">
+                        💬 Nomination Reason
+                      </h4>
+                      <div className="bg-white p-3 rounded border border-orange-200">
+                        <p className="text-orange-700 text-sm leading-relaxed italic">
+                          "{submission.reason}"
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Footer */}
+                  <div className={`bg-gradient-to-r ${colors[index].bg} p-3 text-center`}>
+                    <p className="text-white text-sm font-medium">
+                      ✨ Ready for Auto-Submission
+                    </p>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      ) : (
+        <div>
+          {showConfig && <ConfigPanel config={config} onConfigUpdate={onConfigUpdate} />}
+          
+          <form onSubmit={handleSubmit} className="space-y-8">
         <section>
           <div className="space-y-6">
             <div>
@@ -254,20 +378,22 @@ ${Object.entries(details.payload || {}).map(([k,v]) => `• ${k}: ${v}`).join('\
                 <input
                   type="text"
                   name="nominator_first"
-                  value={formData.nominator_first}
+                  value={formData.nominator_first || ''}
                   onChange={handleChange}
                   placeholder="First"
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-eloy-primary focus:border-transparent transition-all"
+                  readOnly={autoSubmit}
+                  className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-eloy-primary focus:border-transparent transition-all ${autoSubmit ? 'bg-gray-100' : ''}`}
                 />
                 <input
                   type="text"
                   name="nominator_last"
-                  value={formData.nominator_last}
+                  value={formData.nominator_last || ''}
                   onChange={handleChange}
                   placeholder="Last"
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-eloy-primary focus:border-transparent transition-all"
+                  readOnly={autoSubmit}
+                  className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-eloy-primary focus:border-transparent transition-all ${autoSubmit ? 'bg-gray-100' : ''}`}
                 />
               </div>
             </div>
@@ -334,20 +460,22 @@ ${Object.entries(details.payload || {}).map(([k,v]) => `• ${k}: ${v}`).join('\
                 <input
                   type="text"
                   name="nominee_first"
-                  value={formData.nominee_first}
+                  value={formData.nominee_first || ''}
                   onChange={handleChange}
                   placeholder="First"
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-eloy-primary focus:border-transparent transition-all"
+                  readOnly={autoSubmit}
+                  className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-eloy-primary focus:border-transparent transition-all ${autoSubmit ? 'bg-gray-100' : ''}`}
                 />
                 <input
                   type="text"
                   name="nominee_last"
-                  value={formData.nominee_last}
+                  value={formData.nominee_last || ''}
                   onChange={handleChange}
                   placeholder="Last"
                   required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-eloy-primary focus:border-transparent transition-all"
+                  readOnly={autoSubmit}
+                  className={`w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-eloy-primary focus:border-transparent transition-all ${autoSubmit ? 'bg-gray-100' : ''}`}
                 />
               </div>
             </div>
@@ -448,7 +576,9 @@ ${Object.entries(details.payload || {}).map(([k,v]) => `• ${k}: ${v}`).join('\
             </label>
           </div>
         </section>
-      </form>
+          </form>
+        </div>
+      )}
     </div>
   )
 }

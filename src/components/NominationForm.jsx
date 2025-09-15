@@ -130,19 +130,39 @@ ${Object.entries(details.payload || {}).map(([k,v]) => `• ${k}: ${v}`).join('\
           <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
             📝 Next 3 Submissions
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {currentSubmissions.map((submission, index) => (
-              <div key={index} className="bg-white bg-opacity-20 p-4 rounded-lg">
-                <div className="font-bold text-lg mb-2">
-                  {index === 0 ? '👗 Fashion' : index === 1 ? '💰 Finance' : '🎓 Education/Tech'}
+              <div key={index} className="bg-white bg-opacity-20 p-4 rounded-lg border-2 border-white border-opacity-30">
+                <div className="font-bold text-lg mb-3 text-center">
+                  {index === 0 ? '👗 Fashion Award' : index === 1 ? '💰 Finance Award' : '🎓 Education/Tech Award'}
                 </div>
-                <div className="text-sm space-y-1">
-                  <div><strong>👤 Nominee:</strong> {submission.firstName} {submission.lastName}</div>
-                  <div><strong>🏆 Category:</strong> {submission.category}</div>
-                  <div><strong>💬 Reason:</strong> {submission.reason?.substring(0, 80)}...</div>
+                <div className="text-sm space-y-2">
+                  <div className="bg-white bg-opacity-10 p-2 rounded">
+                    <strong>👤 Nominee:</strong><br/>
+                    <span className="text-yellow-200">{submission.nominee_first} {submission.nominee_last}</span>
+                  </div>
+                  <div className="bg-white bg-opacity-10 p-2 rounded">
+                    <strong>🏆 Category:</strong><br/>
+                    <span className="text-yellow-200">{submission.category}</span>
+                  </div>
+                  <div className="bg-white bg-opacity-10 p-2 rounded">
+                    <strong>📧 Nominator:</strong><br/>
+                    <span className="text-yellow-200">{submission.nominator_first} {submission.nominator_last}</span>
+                  </div>
+                  <div className="bg-white bg-opacity-10 p-2 rounded">
+                    <strong>📱 Instagram:</strong><br/>
+                    <span className="text-yellow-200 text-xs break-all">{submission.nominee_instagram}</span>
+                  </div>
+                  <div className="bg-white bg-opacity-10 p-2 rounded">
+                    <strong>💬 Reason:</strong><br/>
+                    <span className="text-yellow-200 text-xs leading-relaxed">{submission.reason?.substring(0, 120)}...</span>
+                  </div>
                 </div>
               </div>
             ))}
+          </div>
+          <div className="mt-4 text-center text-sm opacity-90">
+            <p>✨ These 3 nominations will be submitted automatically when the countdown reaches 0</p>
           </div>
         </div>
       )}

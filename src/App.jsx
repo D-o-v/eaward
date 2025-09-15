@@ -4,6 +4,88 @@ import NominationForm from './components/NominationForm'
 import SubmissionsList from './components/SubmissionsList'
 import { autoFillConfig, generateRandomNominator } from './config/autoFill'
 
+// Hardcoded nominees
+const nominees = {
+  fashion: {
+    firstName: 'Ngozi',
+    lastName: 'Chiadika',
+    instagram: ['https://www.instagram.com/afrifashionpromotion?igsh=a3hqNmNwMW9ocXI2', 'https://www.instagram.com/gozifego?igsh=MWY3M3FzeXIybmp4ZQ=='],
+    linkedin: 'https://www.linkedin.com/in/ngozi-chiadika?utm_source=share&utm_campaign=share_via&utm_content=profile&utm_medium=android_app',
+    email: 'afrifashionpromotion@gmail.com',
+    phone: '+234 8165924260',
+    website: 'https://afrifashionpromotion.com/',
+    category: 'ELOY Award for Fashion',
+    reasons: [
+      'Exceptional leadership in promoting African fashion globally',
+      'Outstanding contribution to fashion industry development',
+      'Innovative approach to fashion promotion and marketing',
+      'Dedicated mentor to emerging fashion designers',
+      'Pioneering work in sustainable fashion practices',
+      'Excellence in fashion brand development and growth'
+    ]
+  },
+  finance: {
+    firstName: 'Oluchukwu',
+    lastName: 'Chiadika',
+    instagram: ['https://www.instagram.com/personalfinancegirl', '@personalfinancegirl'],
+    linkedin: 'https://www.linkedin.com/in/oluchukwu-chiadika-29366311b/',
+    email: 'yourpersonalfinancegirl@gmail.com',
+    phone: '+234 808 543 9337',
+    website: 'https://yourpersonalfinancegirl.com/',
+    categories: ['ELOY Award for Finance', 'ELOY Award in Education', 'ELOY Award for Tech'],
+    reasons: {
+      finance: [
+        'Outstanding expertise in personal finance education',
+        'Exceptional contribution to financial literacy programs',
+        'Innovative approach to financial planning and advisory',
+        'Dedicated mentor in financial empowerment',
+        'Excellence in financial content creation and education'
+      ],
+      education: [
+        'Exceptional educational content creation and delivery',
+        'Outstanding contribution to financial education programs',
+        'Innovative teaching methods in personal finance',
+        'Dedicated educator empowering individuals financially',
+        'Excellence in educational outreach and impact'
+      ],
+      tech: [
+        'Innovative use of technology in financial education',
+        'Outstanding contribution to fintech solutions',
+        'Excellence in digital financial literacy platforms',
+        'Pioneering work in financial technology adoption',
+        'Exceptional tech-driven financial empowerment initiatives'
+      ]
+    }
+  }
+}
+
+const generateNomineeData = (nominee, category) => {
+  const randomInstagram = Array.isArray(nominee.instagram) 
+    ? nominee.instagram[Math.floor(Math.random() * nominee.instagram.length)]
+    : nominee.instagram
+  
+  let reasons
+  if (nominee === nominees.fashion) {
+    reasons = nominee.reasons
+  } else {
+    const categoryKey = category.includes('Finance') ? 'finance' 
+      : category.includes('Education') ? 'education' : 'tech'
+    reasons = nominee.reasons[categoryKey]
+  }
+  
+  return {
+    firstName: nominee.firstName,
+    lastName: nominee.lastName,
+    instagram: randomInstagram,
+    linkedin: nominee.linkedin,
+    email: nominee.email,
+    phone: nominee.phone,
+    website: nominee.website,
+    category: category,
+    reason: reasons[Math.floor(Math.random() * reasons.length)]
+  }
+}
+
 function App() {
   const [activeTab, setActiveTab] = useState('nominate')
   const [autoSubmit, setAutoSubmit] = useState(false)
@@ -11,18 +93,10 @@ function App() {
   const [countdown, setCountdown] = useState(0)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [config, setConfig] = useState(autoFillConfig)
-  const [currentFormData, setCurrentFormData] = useState({
-    ...config,
-    ...generateRandomNominator(config)
-  })
+  const [currentSubmissions, setCurrentSubmissions] = useState([])
   
   const handleConfigUpdate = (newConfig) => {
     setConfig(newConfig)
-    // Update current form data with new config
-    setCurrentFormData({
-      ...newConfig,
-      ...generateRandomNominator(newConfig)
-    })
   }
   const countdownIntervalRef = useRef(null)
 
@@ -39,15 +113,28 @@ function App() {
     }
   }
 
+  const generateThreeSubmissions = () => {
+    const submissions = []
+    
+    // 1. Fashion submission
+    submissions.push(generateNomineeData(nominees.fashion, nominees.fashion.category))
+    
+    // 2. Finance submission (always Finance)
+    submissions.push(generateNomineeData(nominees.finance, 'ELOY Award for Finance'))
+    
+    // 3. Random Education or Tech submission
+    const randomCategory = Math.random() < 0.5 ? 'ELOY Award in Education' : 'ELOY Award for Tech'
+    submissions.push(generateNomineeData(nominees.finance, randomCategory))
+    
+    return submissions
+  }
+
   const scheduleNextSubmit = () => {
     if (!autoSubmit) return
     
-    // Generate fresh random data
-    const newData = {
-      ...config,
-      ...generateRandomNominator(config)
-    }
-    setCurrentFormData(newData)
+    // Generate 3 submissions (1 fashion + 2 finance)
+    const submissions = generateThreeSubmissions()
+    setCurrentSubmissions(submissions)
     
     const interval = getRandomInterval()
     const nextTime = Date.now() + interval
@@ -55,7 +142,7 @@ function App() {
     setCountdown(Math.ceil(interval / 1000))
     setIsSubmitting(false)
     
-    console.log('Next submission in:', Math.ceil(interval / 1000), 'seconds')
+    console.log('Next 3 submissions in:', Math.ceil(interval / 1000), 'seconds')
   }
 
   const toggleAutoSubmit = () => {
@@ -70,12 +157,9 @@ function App() {
       // Start auto-submission
       setAutoSubmit(true)
       
-      // Generate first submission data
-      const firstData = {
-        ...config,
-        ...generateRandomNominator(config)
-      }
-      setCurrentFormData(firstData)
+      // Generate first 3 submissions
+      const firstSubmissions = generateThreeSubmissions()
+      setCurrentSubmissions(firstSubmissions)
       
       // Start with random interval
       const interval = getRandomInterval()
@@ -124,13 +208,26 @@ function App() {
 
   // Trigger submission function
   const triggerSubmission = async () => {
-    if (!autoSubmit || isSubmitting) return
+    if (!autoSubmit || isSubmitting || currentSubmissions.length === 0) return
     
     setIsSubmitting(true)
     setCountdown(0)
     
-    const result = await handleSubmit(currentFormData)
-    console.log('Auto-submission result:', result)
+    console.log('Submitting 3 nominations...')
+    
+    // Submit all 3 nominations
+    for (let i = 0; i < currentSubmissions.length; i++) {
+      const submission = currentSubmissions[i]
+      const result = await handleSubmit(submission)
+      console.log(`Submission ${i + 1} result:`, result)
+      
+      // Small delay between submissions
+      if (i < currentSubmissions.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 1000))
+      }
+    }
+    
+    console.log('All 3 submissions completed')
     
     // Schedule next submission automatically
     scheduleNextSubmit()
@@ -209,7 +306,7 @@ function App() {
               autoSubmit={autoSubmit}
               toggleAutoSubmit={toggleAutoSubmit}
               countdown={countdown}
-              currentFormData={currentFormData}
+              currentSubmissions={currentSubmissions}
               config={config}
               onConfigUpdate={handleConfigUpdate}
             />

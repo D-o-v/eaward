@@ -3,19 +3,12 @@ import axios from 'axios'
 import { autoFillConfig, generateRandomNominator } from '../config/autoFill'
 import ConfigPanel from './ConfigPanel'
 
-const NominationForm = ({ autoSubmit, toggleAutoSubmit, countdown, currentFormData, config, onConfigUpdate }) => {
+const NominationForm = ({ autoSubmit, toggleAutoSubmit, countdown, currentSubmissions, config, onConfigUpdate }) => {
   const [categories, setCategories] = useState([])
-  const [formData, setFormData] = useState(currentFormData || {
+  const [formData, setFormData] = useState({
     ...autoFillConfig,
     ...generateRandomNominator()
   })
-  
-  // Update form data when currentFormData changes (during auto-submission)
-  useEffect(() => {
-    if (currentFormData && autoSubmit) {
-      setFormData(currentFormData)
-    }
-  }, [currentFormData, autoSubmit])
 
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
@@ -132,28 +125,27 @@ ${Object.entries(details.payload || {}).map(([k,v]) => `• ${k}: ${v}`).join('\
 
       </div>
 
-      <div className="bg-gradient-to-r from-eloy-primary to-eloy-secondary p-6 rounded-xl mb-8 text-white shadow-lg">
-        <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
-          📝 Current Submission Data
-        </h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-white bg-opacity-20 p-3 rounded-lg">
-            <strong>👤 Nominator:</strong> {formData.nominator_first} {formData.nominator_last}
-          </div>
-          <div className="bg-white bg-opacity-20 p-3 rounded-lg">
-            <strong>📧 Nominator Email:</strong> {formData.nominator_email}
-          </div>
-          <div className="bg-white bg-opacity-20 p-3 rounded-lg">
-            <strong>📱 Nominator Phone:</strong> {formData.nominator_phone || 'Not provided'}
-          </div>
-          <div className="bg-white bg-opacity-20 p-3 rounded-lg">
-            <strong>👩 Nominee:</strong> {formData.nominee_first} {formData.nominee_last}
+      {autoSubmit && currentSubmissions.length > 0 && (
+        <div className="bg-gradient-to-r from-eloy-primary to-eloy-secondary p-6 rounded-xl mb-8 text-white shadow-lg">
+          <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+            📝 Next 3 Submissions
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {currentSubmissions.map((submission, index) => (
+              <div key={index} className="bg-white bg-opacity-20 p-4 rounded-lg">
+                <div className="font-bold text-lg mb-2">
+                  {index === 0 ? '👗 Fashion' : index === 1 ? '💰 Finance' : '🎓 Education/Tech'}
+                </div>
+                <div className="text-sm space-y-1">
+                  <div><strong>👤 Nominee:</strong> {submission.firstName} {submission.lastName}</div>
+                  <div><strong>🏆 Category:</strong> {submission.category}</div>
+                  <div><strong>💬 Reason:</strong> {submission.reason?.substring(0, 80)}...</div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
-        <div className="mt-4 bg-white bg-opacity-20 p-4 rounded-lg">
-          <strong>💬 Reason:</strong> {formData.reason?.substring(0, 150)}...
-        </div>
-      </div>
+      )}
 
       {showConfig && <ConfigPanel config={config} onConfigUpdate={onConfigUpdate} />}
 
